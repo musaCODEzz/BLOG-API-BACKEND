@@ -1,41 +1,24 @@
-import { type BlogPost, blogs } from "../models/mockData.js";
+// src/services/blog.service.ts
+import Blog from "../models/blog.model.js";
 
-export const getAllBlogPosts = (): BlogPost[] => {
-    return blogs;
+// 1. GET ALL
+export const fetchAllBlogs = async () => {
+    return await Blog.find();
 };
 
-export const createBlogPost = (title: string, content: string, author: string): BlogPost => {
-    const newBlog: BlogPost = {
-        id: blogs.length + 1,
-        title: title,
-        content: content,
-        author: author
-    };
-    blogs.push(newBlog);
-    return newBlog;
+// 2. CREATE
+export const createNewBlog = async (title: string, content: string, author: string) => {
+    return await Blog.create({ title, content, author });
 };
 
-export const updateBlogById = (id: number, title: string, content: string, author: string): BlogPost | null => {
-    const blogIndex = blogs.findIndex(blog => blog.id === id);
-    if (blogIndex === -1) {
-        return null;
-    }
-    const updatedBlog: BlogPost = {
-        id: id,
-        title: title,
-        content: content,
-        author: author
-    };
-    blogs[blogIndex] = updatedBlog;
-    return updatedBlog;
+// 3. UPDATE
+export const updateBlogById = async (id: string, title: string, content: string, author: string) => {
+    // { new: true } tells Mongoose to return the newly updated data, not the old version
+    return await Blog.findByIdAndUpdate(id, { title, content, author }, { new: true });
 };
 
-export const deleteBlogById = (id: number): boolean => {
-    const blogIndex = blogs.findIndex(blog => blog.id === id);
-    if (blogIndex === -1) {
-        return false;
-    }
-    blogs.splice(blogIndex, 1);
-    return true;
+// 4. DELETE
+export const deleteBlogById = async (id: string): Promise<boolean> => {
+    const deletedBlog = await Blog.findByIdAndDelete(id);
+    return deletedBlog !== null; // Returns true if it found and deleted it
 };
-
