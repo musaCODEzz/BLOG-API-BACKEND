@@ -14,6 +14,20 @@ const options: swaggerJsdoc.Options = {
                 description: "Local Development Server",
             },
         ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT",
+                },
+            },
+        },
+        security: [
+            {
+                bearerAuth: [],
+            },
+        ],
     },
     // This tells Swagger where to look for our routes to document them
     apis: ["./src/routes/*.ts"], 

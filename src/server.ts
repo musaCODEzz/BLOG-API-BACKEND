@@ -2,6 +2,7 @@ import express from "express";
 import type { Request, Response, Express } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import morgan from "morgan";
 import { blogRouter } from "./routes/blog.routes.js";
 import { userRouter } from "./routes/user.routes.js";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
@@ -18,6 +19,9 @@ const PORT = process.env.PORT || 8000;
 // middlewares
 app.use(cors());
 app.use(express.json());
+
+// HTTP REQUEST LOGGER
+app.use(morgan("dev")); // Logs HTTP requests to the console
 
 // swagger docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
