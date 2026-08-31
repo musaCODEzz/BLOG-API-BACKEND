@@ -6,7 +6,7 @@ A RESTful API for managing blog posts and user authentication, built with Node.j
 
 - CRUD operations for blog posts (create, read, update, delete)
 - User registration and login with password hashing (bcrypt)
-- JWT-based authentication
+- JWT-based authentication — blog posts can only be created, edited, or deleted by an authenticated user, and only the original author can modify their own post
 - Request validation middleware
 - Centralized error handling
 - Interactive API documentation via Swagger
@@ -20,6 +20,7 @@ A RESTful API for managing blog posts and user authentication, built with Node.j
 - **Database:** MongoDB with Mongoose
 - **Auth:** JSON Web Tokens (jsonwebtoken) + bcrypt for password hashing
 - **Docs:** swagger-jsdoc + swagger-ui-express
+- **Logging:** morgan (HTTP request logger)
 - **Dev tooling:** tsx (dev server), nodemon
 
 ## 📦 Installation
@@ -74,12 +75,16 @@ http://localhost:8000/api-docs.json
 
 ### Blogs — `/api/blogs`
 
-| Method | Endpoint         | Description                          | Body Required |
-|--------|------------------|---------------------------------------|----------------|
-| GET    | `/api/blogs`     | Retrieve all blog posts               | —              |
-| POST   | `/api/blogs`     | Create a new blog post                | `title`, `content`, `author` |
-| PUT    | `/api/blogs/:id` | Update an existing blog post by ID    | `title`, `content`, `author` |
-| DELETE | `/api/blogs/:id` | Delete a blog post by ID              | —              |
+| Method | Endpoint         | Description                          | Auth Required | Body Required |
+|--------|------------------|---------------------------------------|:---:|----------------|
+| GET    | `/api/blogs`     | Retrieve all blog posts               | ❌ | —              |
+| POST   | `/api/blogs`     | Create a new blog post                | ✅ | `title`, `content` |
+| PUT    | `/api/blogs/:id` | Update a blog post (author only)      | ✅ | `title`, `content` |
+| DELETE | `/api/blogs/:id` | Delete a blog post (author only)      | ✅ | —              |
+
+> `author` is set automatically from the logged-in user's token — it is never sent in the request body.
+>
+> Routes marked **Auth Required** expect an `Authorization: Bearer <token>` header. `PUT`/`DELETE` additionally return `403 Forbidden` if the logged-in user is not the original author of the post.
 
 ### Users / Auth — `/api/users`
 
@@ -94,17 +99,30 @@ http://localhost:8000/api-docs.json
 |--------|-----------|----------------------------|
 | GET    | `/health` | Returns API health status |
 
+## 🔑 Authenticating Requests
+
+1. Register a user via `POST /api/users/register`.
+2. Log in via `POST /api/users/login` — the response includes a `token`.
+3. Include that token on any protected request:
+   ```
+   Authorization: Bearer <token>
+   ```
+
+**In Swagger UI:** click the **Authorize** button at the top of the docs page, paste in just the raw token (no `Bearer` prefix, no quotes), and every protected request tried from the UI will include it automatically.
+
+Tokens expire after 1 hour — log in again via `/api/users/login` to get a new one.
+
 ## 🗂️ Data Models
 
 ### Blog (`IBlogPost`)
 
 ```ts
 {
-  title: string;      // required
-  content: string;    // required
-  author: string;     // required
-  createdAt: Date;    // auto-generated
-  updatedAt: Date;    // auto-generated
+  title: string;         // required
+  content: string;       // required
+  author: ObjectId;      // required — references a User document, set automatically from the logged-in user
+  createdAt: Date;       // auto-generated
+  updatedAt: Date;       // auto-generated
 }
 ```
 
@@ -126,9 +144,8 @@ http://localhost:8000/api-docs.json
 blog-api-backend/
 ├── src/
 │   ├── config/
-│   │   ├── database.ts        # ⚠️ unused duplicate — safe to delete
-│   │   ├── db.ts               # MongoDB connection (connect/disconnect) — used in server.ts
-│   │   └── swagger.ts          # Swagger/OpenAPI spec configuration
+│   │   ├── db.ts                # MongoDB connection (connect/disconnect)
+│   │   └── swagger.ts           # Swagger/OpenAPI spec configuration
 │   ├── controllers/
 │   │   ├── blog.controller.ts # Blog CRUD request handlers
 │   │   └── user.controller.ts # Register/login request handlers
@@ -156,11 +173,11 @@ blog-api-backend/
 └── README.md
 ```
 
-> **Note:** `server.ts` imports from `./config/db.js`, so `database.ts` in `src/config/` is an unused duplicate — safe to delete.
-
 ## 🔒 Security Notes
 
 - Passwords are hashed with `bcrypt` before storage and excluded from query results by default (`select: false` on the schema).
+- Blog creation, updates, and deletion all require a valid JWT — enforced by the `requireAuth` middleware.
+- Updates and deletes further check that the requesting user is the original author of the post, returning `403 Forbidden` otherwise.
 - Environment variables (DB connection string, JWT secret) are kept out of version control via `.gitignore`.
 
 ## 📄 License
