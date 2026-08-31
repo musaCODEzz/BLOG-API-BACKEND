@@ -39,9 +39,10 @@ export const updateBlogById = async (id: string, title: string, content: string,
         throw new Error("Not authorized to modify this post.");
     }
 
-    // { new: true } returns the newly updated document
-    return await Blog.findByIdAndUpdate(id, { title, content }, { new: true });
+    // returnDocument: 'after' tells Mongoose to return the newly updated data
+    return await Blog.findByIdAndUpdate(id, { title, content }, { returnDocument: "after" });
 };
+
 
 // 5. DELETE — only the original author may delete their own post
 export const deleteBlogById = async (id: string, userId: string): Promise<boolean> => {
