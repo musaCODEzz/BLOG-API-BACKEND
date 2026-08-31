@@ -1,7 +1,7 @@
-import express, {type Router} from "express";
-import { getBlogs, postBlog, putBlog, deleteBlog} from "../controllers/blog.controller.js";
+import express, { type Router } from "express";
+import { getBlogs, postBlog, putBlog, deleteBlog } from "../controllers/blog.controller.js";
 import { validateBlogPost } from "../middlewares/validateBlog.js";
-
+import { requireAuth } from "../middlewares/auth.js";
 
 export const blogRouter: Router = express.Router();
 
@@ -10,7 +10,8 @@ export const blogRouter: Router = express.Router();
  * /api/blogs:
  *   get:
  *     summary: Retrieve a list of all blogs
- *     description: Fetches all blog posts currently stored in memory.
+ *     description: Fetches all blog posts. Public endpoint — no authentication required.
+ *     security: []
  *     responses:
  *       200:
  *         description: A list of blogs.
@@ -22,13 +23,18 @@ blogRouter.get("/", getBlogs);
  * /api/blogs:
  *   post:
  *     summary: Create a new blog post
- *     description: Adds a new blog post. Requires title, content, and author.
+ *     description: Adds a new blog post. Requires authentication — the author is set automatically from the logged-in user's token.
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - title
+ *               - content
  *             properties:
  *               title:
  *                 type: string
@@ -36,36 +42,40 @@ blogRouter.get("/", getBlogs);
  *               content:
  *                 type: string
  *                 example: "Testing the UI"
- *               author:
- *                 type: string
- *                 example: "John Doe"
  *     responses:
  *       201:
  *         description: Blog created successfully.
  *       400:
  *         description: Validation failed (Missing fields).
+ *       401:
+ *         description: Unauthorized — missing or invalid token.
  */
-blogRouter.post("/", validateBlogPost, postBlog);
+blogRouter.post("/", requireAuth, validateBlogPost, postBlog);
 
 /**
  * @swagger
  * /api/blogs/{id}:
  *   put:
  *     summary: Update an existing blog post
- *     description: Modifies a blog post by its ID. Requires title, content, and author.
+ *     description: Modifies a blog post by its ID. Requires authentication — only the original author may update their own post.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: Numeric ID of the blog to update
+ *         description: ID of the blog to update
  *         schema:
- *           type: integer
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - title
+ *               - content
  *             properties:
  *               title:
  *                 type: string
@@ -73,36 +83,43 @@ blogRouter.post("/", validateBlogPost, postBlog);
  *               content:
  *                 type: string
  *                 example: "This content was updated via Swagger!"
- *               author:
- *                 type: string
- *                 example: "Musa"
  *     responses:
  *       200:
  *         description: Blog updated successfully.
  *       400:
  *         description: Validation failed (Missing fields).
+ *       401:
+ *         description: Unauthorized — missing or invalid token.
+ *       403:
+ *         description: Forbidden — you are not the author of this post.
  *       404:
  *         description: Blog not found.
  */
-blogRouter.put("/:id", validateBlogPost, putBlog);
+blogRouter.put("/:id", requireAuth, validateBlogPost, putBlog);
 
 /**
  * @swagger
  * /api/blogs/{id}:
  *   delete:
  *     summary: Delete a blog post
- *     description: Permanently removes a blog post by its ID.
+ *     description: Permanently removes a blog post by its ID. Requires authentication — only the original author may delete their own post.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: Numeric ID of the blog to delete
+ *         description: ID of the blog to delete
  *         schema:
- *           type: integer
+ *           type: string
  *     responses:
  *       200:
  *         description: Blog successfully deleted.
+ *       401:
+ *         description: Unauthorized — missing or invalid token.
+ *       403:
+ *         description: Forbidden — you are not the author of this post.
  *       404:
  *         description: Blog not found.
  */
-blogRouter.delete("/:id", deleteBlog);
+blogRouter.delete("/:id", requireAuth, deleteBlog);

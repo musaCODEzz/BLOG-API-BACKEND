@@ -1,22 +1,23 @@
-import type {Request, Response, NextFunction} from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
-export const validateBlogPost  = (req: Request, res: Response, next: NextFunction): void => {
-    const { title, content, author } = req.body;
-    if (!title || !content || !author) {
-        res.status(400).json({ 
+export const validateBlogPost = (req: Request, res: Response, next: NextFunction): void => {
+    const { title, content } = req.body;
+
+    if (!title || !content) {
+        res.status(400).json({
             error: 'Validation Failed',
-            message: 'Title, content, and author are required fields.'
+            message: 'Title and content are required fields.'
         });
         return;
     }
-    if (title.trim() === '' || content.trim() === '' || author.trim() === '') {
-        res.status(400).json({ 
+
+    if (title.trim() === '' || content.trim() === '') {
+        res.status(400).json({
             error: 'Validation Failed',
-            message: 'Title, content, and author cannot be empty strings.'
+            message: 'Title and content cannot be empty strings.'
         });
         return;
     }
+
     next();
-
-}
-
+};

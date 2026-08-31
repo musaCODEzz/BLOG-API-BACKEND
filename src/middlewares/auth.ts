@@ -9,12 +9,12 @@ export const requireAuth = (req: AuthRequest, res: Response, next: NextFunction)
     try {
         const header = req.headers.authorization;
 
-        if (!header || !header.startsWith("Bearer")) {
+        if (!header || !header.startsWith("Bearer ")) {
             res.status(401).json({ error: "Unauthorized" });
             return;
         }
 
-        const token = header.slice("Bearer".length);
+        const token = header.slice("Bearer ".length); // note the trailing space — strips "Bearer " entirely, not just "Bearer"
         const secret = process.env["JWT_SECRET"] as string;
 
         if (!secret) {
@@ -22,7 +22,7 @@ export const requireAuth = (req: AuthRequest, res: Response, next: NextFunction)
             return;
         }
 
-        const payload = jwt.verify(token, secret) as { userId: string }; // Assuming the payload contains an 'id' field
+        const payload = jwt.verify(token, secret) as { userId: string };
         req.userId = payload.userId;
         next();
     } catch (error) {
