@@ -30,7 +30,7 @@ const options: swaggerJsdoc.Options = {
         ],
     },
     // This tells Swagger where to look for our routes to document them
-    apis: ["./src/routes/*.ts"], 
+    apis: ["./src/routes/*.ts", "./dist/routes/*.js"], 
 };
 
 // Compile the configuration

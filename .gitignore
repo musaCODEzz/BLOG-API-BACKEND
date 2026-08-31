@@ -1,3 +1,6 @@
 node_modules/
 .env
 dist/
+.vscode/mcp.json
+testsprite_tests/tmp/
+testsprite_tests/tmp/config.json

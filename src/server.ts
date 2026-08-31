@@ -33,14 +33,24 @@ app.get("/api-docs.json", (req: Request, res: Response) => {
 // routes
 app.use("/api/blogs", blogRouter);
 app.use("/api/users", userRouter);
-app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({ message: "Blog API is healthy" });
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: "ok",
+    message: "Blog API is healthy",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
 });
 
 // 404 handler — must come after all valid routes
-app.use((_req: Request, res: Response<{ error: string }>) => {
-  res.status(404).json({ error: "Route not found" });
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({
+    error: "Route not found",
+    statusCode: 404,
+    timestamp: new Date().toISOString()
+  });
 });
+
 
 // global error handler — must be registered last
 app.use(globalErrorHandler);

@@ -1,0 +1,82 @@
+{
+  "project": {
+    "name": "blog-api-backend",
+    "type": "backend",
+    "description": "A RESTful Express + TypeScript API for managing blog posts and user authentication with MongoDB and JWT."
+  },
+  "features": [
+    {
+      "name": "Blog listing",
+      "description": "Fetch all blog posts without authentication.",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/blogs",
+          "authRequired": false,
+          "description": "Returns all blogs in the collection."
+        }
+      ]
+    },
+    {
+      "name": "Blog CRUD",
+      "description": "Create, update, and delete blog posts for authenticated users only.",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/api/blogs",
+          "authRequired": true,
+          "description": "Creates a blog post using the logged-in user's JWT identity."
+        },
+        {
+          "method": "PUT",
+          "path": "/api/blogs/:id",
+          "authRequired": true,
+          "description": "Updates a blog post if the current user is the original author."
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/blogs/:id",
+          "authRequired": true,
+          "description": "Deletes a blog post if the current user is the original author."
+        }
+      ]
+    },
+    {
+      "name": "User auth",
+      "description": "Register new users and login to receive a JWT token.",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/api/users/register",
+          "authRequired": false,
+          "description": "Registers a new user account."
+        },
+        {
+          "method": "POST",
+          "path": "/api/users/login",
+          "authRequired": false,
+          "description": "Authenticates a user and returns a JWT token."
+        }
+      ]
+    },
+    {
+      "name": "Health checks",
+      "description": "Confirms the backend is running and responsive.",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/health",
+          "authRequired": false,
+          "description": "Returns a basic health message to confirm the service is running."
+        }
+      ]
+    }
+  ],
+  "knownLimitations": [
+    {
+      "issue": "The server exits if MongoDB is unavailable.",
+      "location": "src/config/db.ts",
+      "impact": "The service cannot start without a configured MongoDB connection."
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import express, { type Router } from "express";
-import { getBlogs, postBlog, putBlog, deleteBlog } from "../controllers/blog.controller.js";
+import { getBlogs, getBlogById, postBlog, putBlog, deleteBlog } from "../controllers/blog.controller.js";
 import { validateBlogPost } from "../middlewares/validateBlog.js";
 import { requireAuth } from "../middlewares/auth.js";
 
@@ -17,6 +17,28 @@ export const blogRouter: Router = express.Router();
  *         description: A list of blogs.
  */
 blogRouter.get("/", getBlogs);
+
+/**
+ * @swagger
+ * /api/blogs/{id}:
+ *   get:
+ *     summary: Retrieve a single blog post
+ *     description: Fetches a blog post by its ID. Public endpoint — no authentication required.
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the blog to retrieve
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Blog post retrieved successfully.
+ *       404:
+ *         description: Blog post not found.
+ */
+blogRouter.get("/:id", getBlogById);
 
 /**
  * @swagger

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "TC001",
+    "title": "get_all_blogs_without_authentication",
+    "description": "Verify that the GET /api/blogs endpoint returns all blog posts without requiring user authentication."
+  },
+  {
+    "id": "TC002",
+    "title": "create_blog_post_with_authentication",
+    "description": "Verify that the POST /api/blogs endpoint allows an authenticated user to create a new blog post using their JWT identity."
+  },
+  {
+    "id": "TC003",
+    "title": "update_blog_post_by_original_author",
+    "description": "Verify that the PUT /api/blogs/:id endpoint allows only the original author (authenticated user) to update their blog post."
+  },
+  {
+    "id": "TC004",
+    "title": "delete_blog_post_by_original_author",
+    "description": "Verify that the DELETE /api/blogs/:id endpoint allows only the original author (authenticated user) to delete their blog post."
+  },
+  {
+    "id": "TC005",
+    "title": "register_new_user_account",
+    "description": "Verify that the POST /api/users/register endpoint successfully registers a new user account without requiring authentication."
+  },
+  {
+    "id": "TC006",
+    "title": "user_login_and_jwt_token_return",
+    "description": "Verify that the POST /api/users/login endpoint authenticates a user and returns a valid JWT token."
+  },
+  {
+    "id": "TC007",
+    "title": "health_check_endpoint_response",
+    "description": "Verify that the GET /health endpoint returns a basic health message confirming the backend service is running and responsive."
+  }
+]
