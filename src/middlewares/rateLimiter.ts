@@ -1,7 +1,14 @@
 import rateLimit from "express-rate-limit";
+import type { Request, Response, NextFunction } from "express";
 
-export const authLimiter = rateLimit({
+const isTestEnv = process.env.NODE_ENV === "test";
 
+const passthrough = (_req: Request, _res: Response, next: NextFunction) => next();
+
+
+export const authLimiter = isTestEnv
+  ? passthrough
+  : rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     standardHeaders: true,
@@ -15,7 +22,9 @@ export const authLimiter = rateLimit({
 
 // general limiter - for the whole app
 
-export const generalLimiter = rateLimit({
+export const generalLimiter = isTestEnv
+  ? passthrough
+  : rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
     standardHeaders: true,

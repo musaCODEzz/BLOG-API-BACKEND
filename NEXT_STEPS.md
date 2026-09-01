@@ -17,7 +17,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
 [Phase 2: Next Actions 🚀]
   ├── Step 1: Pagination, Search & Filtering [✅ Completed]
   ├── Step 2: Rate Limiting & Brute-Force Protection [✅ Completed]
-  ├── Step 3: Automated Testing Framework (Vitest / Supertest)
+  ├── Step 3: Automated Testing Framework (Vitest / Supertest) [✅ Completed]
   ├── Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS)
   ├── Step 5: Comments & Interaction System
   ├── Step 6: User Profiles & Password Management
@@ -74,25 +74,20 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
    - Limits: 100 requests per 15-minute window per IP.
    - Standard `RateLimit-*` headers enabled.
 
-
 ---
 
-## Step 3: Automated Testing Suite (Vitest / Supertest)
+## Step 3: Automated Testing Suite (Vitest / Supertest) [✅ COMPLETED]
 **Goal:** Implement automated unit and integration tests for CI/CD automation without manual Postman clicks.
 
-### Actions:
-1. Install testing dependencies:
-   ```bash
-   npm install -D vitest supertest @types/supertest mongodb-memory-server
-   ```
-2. Add a `test` script in `package.json`:
-   ```json
-   "scripts": {
-     "test": "vitest run",
-     "test:watch": "vitest"
-   }
-   ```
-3. Create test files in `tests/` matching each route (`user.test.ts`, `blog.test.ts`).
+### Implemented Features:
+1. **Vitest + Supertest + MongoMemoryServer**:
+   - Automated in-memory database tests running with `npm test` (`vitest run`).
+   - Clean state per test using `afterEach` hooks in `tests/setup.ts`.
+2. **Test Suites**:
+   - `tests/health.test.ts` (Health endpoint check)
+   - `tests/user.test.ts` (Registration, duplicate email, invalid login, valid JWT)
+   - `tests/blog.test.ts` (Authenticated creation, listing, author-only deletion)
+
 
 ---
 
