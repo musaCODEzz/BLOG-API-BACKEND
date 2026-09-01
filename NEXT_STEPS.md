@@ -16,7 +16,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
 
 [Phase 2: Next Actions 🚀]
   ├── Step 1: Pagination, Search & Filtering [✅ Completed]
-  ├── Step 2: Rate Limiting & Brute-Force Protection
+  ├── Step 2: Rate Limiting & Brute-Force Protection [✅ Completed]
   ├── Step 3: Automated Testing Framework (Vitest / Supertest)
   ├── Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS)
   ├── Step 5: Comments & Interaction System
@@ -57,27 +57,23 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
   }
   ```
 
-
 ---
 
-## Step 2: Rate Limiting & Brute-Force Protection
+## Step 2: Rate Limiting & Brute-Force Protection [✅ COMPLETED]
 **Goal:** Safeguard auth and public endpoints against denial-of-service (DoS) and credential stuffing attacks.
 
-### Actions:
-1. Install `express-rate-limit`:
-   ```bash
-   npm install express-rate-limit
-   ```
-2. Apply strict rate limits to auth routes (e.g., 5-10 requests per 15 minutes for `/api/users/login`):
-   ```typescript
-   import rateLimit from "express-rate-limit";
+### Implemented Features:
+1. **Installed `express-rate-limit`**:
+   - Added to dependencies in `package.json`.
+2. **Auth Limiter (`authLimiter`)**:
+   - Applied to `POST /api/users/register` and `POST /api/users/login` in `user.routes.ts`.
+   - Limits: 10 requests per 15-minute window per IP.
+   - Status code: `429 Too Many Requests`.
+3. **General App Limiter (`generalLimiter`)**:
+   - Applied globally in `server.ts` to protect all API routes.
+   - Limits: 100 requests per 15-minute window per IP.
+   - Standard `RateLimit-*` headers enabled.
 
-   export const authLimiter = rateLimit({
-     windowMs: 15 * 60 * 1000,
-     max: 10,
-     message: { error: "Too many login attempts. Please try again later.", statusCode: 429 }
-   });
-   ```
 
 ---
 

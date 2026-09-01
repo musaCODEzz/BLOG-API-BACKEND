@@ -1,6 +1,8 @@
 import express, { type Router } from "express";
 import { registerUser, login } from "../controllers/user.controller.js";
 import { validateUser } from "../middlewares/validateUser.js";
+import { authLimiter } from "../middlewares/rateLimiter.js";
+
 
 export const userRouter: Router = express.Router();
 
@@ -35,8 +37,10 @@ export const userRouter: Router = express.Router();
  *         description: User created successfully
  *       409:
  *         description: User with this email already exists
+ *       429:
+ *         description: Too many requests from this IP, please try again later.
  */
-userRouter.post("/register", validateUser, registerUser);
+userRouter.post("/register", authLimiter, validateUser, registerUser);
 
 /**
  * @swagger
@@ -67,5 +71,7 @@ userRouter.post("/register", validateUser, registerUser);
  *         description: Email and password are required
  *       401:
  *         description: Invalid email or password
+ *       429:
+ *         description: Too many requests from this IP, please try again later.
  */
-userRouter.post("/login", login);
+userRouter.post("/login", authLimiter, login);

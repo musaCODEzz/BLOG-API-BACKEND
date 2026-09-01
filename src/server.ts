@@ -6,6 +6,7 @@ import morgan from "morgan";
 import { blogRouter } from "./routes/blog.routes.js";
 import { userRouter } from "./routes/user.routes.js";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
+import { generalLimiter } from "./middlewares/rateLimiter.js";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.js";
 import { connectDatabase, disconnectDatabase } from "./config/db.js";
@@ -22,6 +23,9 @@ app.use(express.json());
 
 // HTTP REQUEST LOGGER
 app.use(morgan("dev")); // Logs HTTP requests to the console
+
+// apply general rate limiter to all requests
+app.use(generalLimiter);
 
 // swagger docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
