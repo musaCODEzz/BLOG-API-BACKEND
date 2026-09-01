@@ -9,12 +9,40 @@ export const blogRouter: Router = express.Router();
  * @swagger
  * /api/blogs:
  *   get:
- *     summary: Retrieve a list of all blogs
- *     description: Fetches all blog posts. Public endpoint — no authentication required.
+ *     summary: Retrieve a paginated list of blogs
+ *     description: Fetches blog posts with pagination and optional text search across title and content. Public endpoint — no authentication required.
  *     security: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Page number to retrieve (defaults to 1)
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Number of results per page (defaults to 10)
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         description: Text search term matched against blog title and content
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         description: Field to sort by (prefix with '-' for descending, e.g. '-createdAt', 'createdAt', '-title')
+ *         schema:
+ *           type: string
+ *           default: "-createdAt"
  *     responses:
  *       200:
- *         description: A list of blogs.
+ *         description: A paginated list of blogs.
  */
 blogRouter.get("/", getBlogs);
 

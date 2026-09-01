@@ -15,7 +15,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
   └── Standardized Error Format & Swagger Docs
 
 [Phase 2: Next Actions 🚀]
-  ├── Step 1: Pagination, Search & Filtering
+  ├── Step 1: Pagination, Search & Filtering [✅ Completed]
   ├── Step 2: Rate Limiting & Brute-Force Protection
   ├── Step 3: Automated Testing Framework (Vitest / Supertest)
   ├── Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS)
@@ -27,16 +27,25 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
 
 ---
 
-## Step 1: Pagination, Search & Sorting
+## Step 1: Pagination, Search & Sorting [✅ COMPLETED]
 **Goal:** Prevent large database scans and allow frontend applications to query data efficiently.
 
-### Planned Endpoints & Features:
-- `GET /api/blogs?page=1&limit=10&sort=-createdAt`
-- `GET /api/blogs?search=react` (search across titles and contents using MongoDB text index)
-- Return metadata in responses:
+### Implemented Endpoints & Features:
+- `GET /api/blogs?page=1&limit=10&sort=-createdAt` (Supports dynamic sorting on `createdAt`, `title`, `updatedAt` with ascending/descending `-` prefix)
+- `GET /api/blogs?search=react` (Full-text search across `title` and `content` using MongoDB text index)
+- **Standardized Response Structure:**
   ```json
   {
-    "data": [...],
+    "data": [
+      {
+        "_id": "...",
+        "title": "...",
+        "content": "...",
+        "author": { "_id": "...", "name": "...", "email": "..." },
+        "createdAt": "...",
+        "updatedAt": "..."
+      }
+    ],
     "pagination": {
       "total": 45,
       "page": 1,
@@ -47,6 +56,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
     }
   }
   ```
+
 
 ---
 

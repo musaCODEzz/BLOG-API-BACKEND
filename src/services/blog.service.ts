@@ -1,10 +1,56 @@
 import mongoose from "mongoose";
 import Blog from "../models/blog.model.js";
 
-// 1. GET ALL — Populates author details as required by PRD 5.3
-export const fetchAllBlogs = async () => {
-    return await Blog.find().populate("author", "name email");
+export interface FetchBlogsOptions {
+    page: number;
+    limit: number;
+    search?: string | undefined;
+    sort?: string | undefined;
+}
+
+// 1. GET ALL — Populates author details, supports pagination, search, and dynamic sorting
+export const fetchAllBlogs = async ({ page, limit, search, sort = "-createdAt" }: FetchBlogsOptions) => {
+    const filter: Record<string, unknown> = {};
+    if (search && search.trim() !== "") {
+        filter.$text = { $search: search.trim() };
+    }
+    const skip = (page - 1) * limit;
+
+    // Handle sort parameter (e.g. "-createdAt", "createdAt", "-title", "title")
+    let sortOption: Record<string, 1 | -1> = { createdAt: -1 };
+    if (sort) {
+        const isDescending = sort.startsWith("-");
+        const fieldName = isDescending ? sort.substring(1) : sort;
+        const allowedSortFields = ["createdAt", "title", "updatedAt"];
+        if (allowedSortFields.includes(fieldName)) {
+            sortOption = { [fieldName]: isDescending ? -1 : 1 };
+        }
+    }
+
+    const [blogs, totalResults] = await Promise.all([
+        Blog.find(filter)
+            .populate("author", "name email")
+            .skip(skip)
+            .limit(limit)
+            .sort(sortOption),
+        Blog.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(totalResults / limit) || 1;
+
+    return {
+        blogs,
+        pagination: {
+            total: totalResults,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        }
+    };
 };
+
 
 // 2. GET BY ID — Fetches a single blog post with populated author details
 export const fetchBlogById = async (id: string) => {

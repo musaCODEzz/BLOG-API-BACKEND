@@ -35,5 +35,6 @@ const blogSchema = new Schema<IBlogPost>(
     }
 );
 
+blogSchema.index({ title: "text", content: "text" }); // This allows for text search on title and content
 const Blog = model<IBlogPost>("Blog", blogSchema);
 export default Blog;

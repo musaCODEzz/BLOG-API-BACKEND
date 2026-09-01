@@ -2,15 +2,26 @@ import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middlewares/auth.js";
 import { fetchAllBlogs, fetchBlogById, createNewBlog, updateBlogById, deleteBlogById } from "../services/blog.service.js";
 
-// GET /api/blogs
-export const getBlogs = async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+// GET /api/blogs?page=1&limit=10&search=typescript&sort=-createdAt
+export const getBlogs = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const allBlogs = await fetchAllBlogs();
-        res.status(200).json(allBlogs);
+        // req.query values are strings — parse to numbers with safe bounds
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string) || 10));
+        const search = req.query.search as string | undefined;
+        const sort = req.query.sort as string | undefined;
+
+        const { blogs, pagination } = await fetchAllBlogs({ page, limit, search, sort });
+
+        res.status(200).json({
+            data: blogs,
+            pagination
+        });
     } catch (error) {
         next(error);
     }
 };
+
 
 // GET /api/blogs/:id
 export const getBlogById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
