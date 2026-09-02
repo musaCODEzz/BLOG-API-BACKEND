@@ -4,6 +4,8 @@ export interface IUser extends Document {
     name: string;
     email: string;
     password: string;
+    resetPasswordToken?: string;
+    resetPasswordExpires?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -28,6 +30,14 @@ const UserSchema = new Schema<IUser>(
             required: [true, 'Password is required'],
             minlength: [6, 'Password must be at least 6 characters long'],
             select: false // This ensures that the password is not returned in queries by default
+        },
+        resetPasswordToken: {
+            type: String,
+            select: false // This ensures that the resetPasswordToken is not returned in queries by default
+        },
+        resetPasswordExpires: {
+            type: Date,
+            select: false // This ensures that the resetPasswordExpires is not returned in queries by default
         }
 
     },

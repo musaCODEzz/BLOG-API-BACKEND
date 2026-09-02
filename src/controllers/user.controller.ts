@@ -1,5 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { createNewUser, loginUser } from "../services/user.service.js";
+import type { AuthRequest } from "../middlewares/auth.js";
+import { createNewUser, loginUser, fetchUserProfile } from "../services/user.service.js";
+import {fetchBlogsByAuthor} from "../services/blog.service.js";
 
 // POST /api/users/register
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -61,6 +63,62 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
             });
             return;
         }
+        next(error);
+    }
+};
+
+// GET /api/users/profile
+export const getProfile = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const userId = req.userId; // Assuming userId is set in the request by authentication middleware
+        if (!userId) {
+            res.status(401).json({
+                error: "Unauthorized access. User ID is missing.",
+                statusCode: 401,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+        
+        const user = await fetchUserProfile(userId);
+        if (!user) {
+            res.status(404).json({
+                error: "User not found.",
+                statusCode: 404,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        res.status(200).json({
+            message: "User profile fetched successfully!",
+            user
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// GET /api/users/:id/blogs
+export const getUserBlogs = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const authorId = req.params.id as string;
+        const blogs = await fetchBlogsByAuthor(authorId);
+
+        if (blogs === null) {
+            res.status(404).json({
+                error: "Author not found or invalid author ID.",
+                statusCode: 404,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        res.status(200).json({
+            count: blogs.length,
+            data: blogs
+        });
+    } catch (error) {
         next(error);
     }
 };

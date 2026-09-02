@@ -113,3 +113,14 @@ export const deleteBlogById = async (id: string, userId: string): Promise<boolea
     const deletedBlog = await Blog.findByIdAndDelete(id);
     return deletedBlog !== null;
 };
+
+// 6. GET BLOGS BY AUTHOR — Fetches all posts written by a specific user ID
+export const fetchBlogsByAuthor = async (authorId: string) => {
+    if (!mongoose.Types.ObjectId.isValid(authorId)) {
+        return null;
+    }
+    const blogs = await Blog.find({ author: authorId })
+        .populate("author", "name email")
+        .sort({ createdAt: -1 });
+    return blogs;
+};
