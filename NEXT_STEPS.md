@@ -18,7 +18,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
   ├── Step 1: Pagination, Search & Filtering [✅ Completed]
   ├── Step 2: Rate Limiting & Brute-Force Protection [✅ Completed]
   ├── Step 3: Automated Testing Framework (Vitest / Supertest) [✅ Completed]
-  ├── Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS)
+  ├── Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS) [✅ Completed]
   ├── Step 5: Comments & Interaction System
   ├── Step 6: User Profiles & Password Management
   ├── Step 7: Dockerization & Environment Config
@@ -88,19 +88,23 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
    - `tests/user.test.ts` (Registration, duplicate email, invalid login, valid JWT)
    - `tests/blog.test.ts` (Authenticated creation, listing, author-only deletion)
 
-
 ---
 
-## Step 4: Security Hardening
+## Step 4: Security Hardening [✅ COMPLETED]
 **Goal:** Comply with OWASP Top 10 API Security recommendations.
 
-### Actions:
-1. **HTTP Security Headers:** Add `helmet`:
-   ```bash
-   npm install helmet
-   ```
-2. **NoSQL Injection Prevention:** Sanitize inputs against MongoDB query selector injections (`$gt`, `$ne`, etc.).
-3. **CORS Restrictions:** Restrict `cors({ origin: process.env.ALLOWED_ORIGINS || "http://localhost:3000" })` instead of open wildcard `*` in production.
+### Implemented Features:
+1. **HTTP Security Headers (`helmet`)**:
+   - Applied globally in `src/app.ts` (`contentSecurityPolicy: false` to allow interactive Swagger UI rendering).
+   - Enforces `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, and HSTS.
+2. **NoSQL Injection Prevention (`mongoSanitizer`)**:
+   - Implemented in `src/middlewares/mongoSanitize.ts`.
+   - Recursively scrubs and removes malicious `$` operator keys and `.` dot notation keys from `req.body`, `req.params`, and `req.query`.
+3. **CORS Restrictions**:
+   - Configured in `src/app.ts` with `origin: process.env.ALLOWED_ORIGINS || "http://localhost:3000"` and `credentials: true`.
+4. **Automated Security Tests**:
+   - Added `tests/security.test.ts` to automatically verify Helmet headers and NoSQL sanitization.
+
 
 ---
 

@@ -1,19 +1,31 @@
 import express from "express";
 import type { Request, Response, Express } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import morgan from "morgan";
 import { blogRouter } from "./routes/blog.routes.js";
 import { userRouter } from "./routes/user.routes.js";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
 import { generalLimiter } from "./middlewares/rateLimiter.js";
+import { mongoSanitizer } from "./middlewares/mongoSanitize.js";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.js";
 
 
 const app: Express = express();
 
-app.use(cors());
+app.use(helmet({
+    contentSecurityPolicy:false
+}));
+const allowedOrigin = process.env.ALLOWED_ORIGINS || "http://localhost:3000";
+
+app.use(cors({
+     origin: allowedOrigin,
+     credentials: true,
+}));
 app.use(express.json());
+app.use(mongoSanitizer);
+
 
 // HTTP REQUEST LOGGER
 app.use(morgan("dev")); // Logs HTTP requests to the console

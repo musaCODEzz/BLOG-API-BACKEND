@@ -142,6 +142,7 @@ blog-api-backend/
 │   ├── middlewares/
 │   │   ├── auth.ts             # JWT verification middleware
 │   │   ├── errorHandler.ts     # Global centralized error handler
+│   │   ├── mongoSanitize.ts    # NoSQL query injection prevention
 │   │   ├── rateLimiter.ts      # Auth & general IP rate limiters
 │   │   ├── validateBlog.ts     # Blog request validation
 │   │   └── validateUser.ts     # User request validation
@@ -157,6 +158,7 @@ blog-api-backend/
 ├── tests/
 │   ├── setup.ts                # In-memory MongoDB lifecycle for test runner
 │   ├── health.test.ts          # Health check endpoint tests
+│   ├── security.test.ts        # Security headers & NoSQL injection tests
 │   ├── user.test.ts            # Registration & login integration tests
 │   └── blog.test.ts            # Blog CRUD & authorization integration tests
 ├── NEXT_STEPS.md               # Actionable roadmap for future enhancements
@@ -176,8 +178,8 @@ For full implementation guides and code snippets, see [NEXT_STEPS.md](file:///Us
 - **Step 1: Pagination, Search & Sorting** — `[✅ Completed]`
 - **Step 2: Rate Limiting & Brute-Force Protection** — `[✅ Completed]`
 - **Step 3: Automated Testing Suite (Vitest / Supertest)** — `[✅ Completed]`
-- **Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS)** — `[Next]`
-- **Step 5: Comments & Interaction System**
+- **Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS)** — `[✅ Completed]`
+- **Step 5: Comments & Interaction System** — `[Next]`
 - **Step 6: User Profiles & Password Reset**
 - **Step 7: Dockerization & Cloud Deployment**
 
