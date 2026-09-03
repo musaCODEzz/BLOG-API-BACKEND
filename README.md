@@ -7,14 +7,15 @@ A production-grade RESTful API for managing blog posts and user authentication, 
 ## 🚀 Features
 
 - **Full Blog CRUD:** Create, Read (all or single post), Update, and Delete blog posts.
+- **Comments & Interactions System:** Nested interaction system enabling authenticated users to comment on posts, with public retrieval and author-only deletion.
 - **Pagination, Search & Sorting:** Efficient pagination (`page`, `limit`), full-text search across titles/contents (`search`), and dynamic field sorting (`sort`).
 - **Rate Limiting & DoS Protection:** Built-in IP rate limiters on auth routes (`authLimiter`) and global routes (`generalLimiter`).
-- **Author Protection & Authorization:** Posts are automatically tied to the logged-in user. Only the original author can edit or delete their own posts.
-- **Populated Relationships:** Blog posts automatically populate author details (`_id`, `name`, `email`).
+- **Author Protection & Authorization:** Posts and comments are automatically tied to the logged-in user. Only the original author can edit or delete their own posts/comments.
+- **Populated Relationships:** Blog posts and comments automatically populate author details (`_id`, `name`, `email`).
 - **User Authentication:** Registration and login with password hashing via `bcrypt` and JWT issuance (1-hour expiry).
 - **Type-Safe Validation:** Defensive validation middleware preventing runtime crashes and bad inputs.
 - **Standardized Error Handling:** Consistent PRD-compliant error response format across all endpoints.
-- **Automated In-Memory Test Suite:** 10 integration tests powered by **Vitest**, **Supertest**, and **MongoMemoryServer** with zero production database pollution.
+- **Automated In-Memory Test Suite:** 21 integration tests powered by **Vitest**, **Supertest**, and **MongoMemoryServer** with zero production database pollution.
 - **Interactive Documentation:** Live Swagger/OpenAPI documentation at `/api-docs` and raw schema at `/api-docs.json`.
 - **System Monitoring:** Live health check at `/health` with uptime and timestamp.
 
@@ -100,6 +101,14 @@ Server URL: **`http://localhost:8000`**
 | `PUT` | `/api/blogs/:id` | ✅ | Update blog post (author only) |
 | `DELETE` | `/api/blogs/:id` | ✅ | Delete blog post (author only) |
 
+### Comment Endpoints (`/api/blogs/:blogId/comments`)
+
+| Method | Endpoint | Auth Required | Description |
+|---|---|:---:|---|
+| `GET` | `/api/blogs/:blogId/comments` | ❌ | Retrieve all comments for a blog post (sorted newest first) |
+| `POST` | `/api/blogs/:blogId/comments` | ✅ | Add a comment to a blog post (`content`) |
+| `DELETE` | `/api/blogs/:blogId/comments/:commentId` | ✅ | Delete comment (comment author only) |
+
 ### Authentication & User Endpoints (`/api/users`)
 
 | Method | Endpoint | Auth Required | Description |
@@ -142,6 +151,7 @@ blog-api-backend/
 │   │   └── swagger.ts          # Swagger/OpenAPI configuration
 │   ├── controllers/
 │   │   ├── blog.controller.ts  # Blog CRUD handlers
+│   │   ├── comment.controller.ts # Comment handlers
 │   │   └── user.controller.ts  # Auth & user handlers
 │   ├── middlewares/
 │   │   ├── auth.ts             # JWT verification middleware
@@ -149,20 +159,25 @@ blog-api-backend/
 │   │   ├── mongoSanitize.ts    # NoSQL query injection prevention
 │   │   ├── rateLimiter.ts      # Auth & general IP rate limiters
 │   │   ├── validateBlog.ts     # Blog request validation
+│   │   ├── validateComment.ts  # Comment request validation
 │   │   └── validateUser.ts     # User request validation
 │   ├── models/
 │   │   ├── blog.model.ts       # Mongoose Blog schema & full-text index
+│   │   ├── comment.model.ts    # Mongoose Comment schema & compound index
 │   │   └── user.model.ts       # Mongoose User schema
 │   ├── routes/
 │   │   ├── blog.routes.ts      # /api/blogs routes & Swagger annotations
+│   │   ├── comment.routes.ts   # Comment sub-routes & Swagger annotations
 │   │   └── user.routes.ts      # /api/users routes & Swagger annotations
 │   └── services/
 │       ├── blog.service.ts     # Blog database queries & pagination/sorting
+│       ├── comment.service.ts  # Comment database queries & author protection
 │       └── user.service.ts     # User database queries & password hashing
 ├── tests/
 │   ├── setup.ts                # In-memory MongoDB lifecycle for test runner
 │   ├── health.test.ts          # Health check endpoint tests
 │   ├── security.test.ts        # Security headers & NoSQL injection tests
+│   ├── comment.test.ts         # Comment creation, listing & author deletion tests
 │   ├── user.test.ts            # Registration & login integration tests
 │   └── blog.test.ts            # Blog CRUD & authorization integration tests
 ├── NEXT_STEPS.md               # Actionable roadmap for future enhancements
@@ -183,9 +198,10 @@ For full implementation guides and code snippets, see [NEXT_STEPS.md](file:///Us
 - **Step 2: Rate Limiting & Brute-Force Protection** — `[✅ Completed]`
 - **Step 3: Automated Testing Suite (Vitest / Supertest)** — `[✅ Completed]`
 - **Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS)** — `[✅ Completed]`
-- **Step 5: Comments & Interaction System** — `[Next]`
+- **Step 5: Comments & Interaction System** — `[✅ Completed]`
 - **Step 6: User Profiles & Password Reset** — `[✅ Completed]`
-- **Step 7: Dockerization & Cloud Deployment**
+- **Step 7: Dockerization & Environment Config** — `[Next]`
+- **Step 8: Cloud Deployment & CI/CD Pipeline**
 
 ---
 

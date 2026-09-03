@@ -19,7 +19,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
   ├── Step 2: Rate Limiting & Brute-Force Protection [✅ Completed]
   ├── Step 3: Automated Testing Framework (Vitest / Supertest) [✅ Completed]
   ├── Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS) [✅ Completed]
-  ├── Step 5: Comments & Interaction System
+  ├── Step 5: Comments & Interaction System [✅ Completed]
   ├── Step 6: User Profiles & Password Management [✅ Completed]
   ├── Step 7: Dockerization & Environment Config
   └── Step 8: Cloud Deployment & CI/CD Pipeline
@@ -108,7 +108,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
 
 ---
 
-## Step 5: Comments & Interactions System
+## Step 5: Comments & Interactions System [✅ COMPLETED]
 **Goal:** Enable engagement by allowing authenticated users to comment on posts.
 
 ### Database Schema (`Comment` Model):

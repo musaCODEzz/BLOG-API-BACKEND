@@ -2,6 +2,7 @@ import express, { type Router } from "express";
 import { getBlogs, getBlogById, postBlog, putBlog, deleteBlog } from "../controllers/blog.controller.js";
 import { validateBlogPost } from "../middlewares/validateBlog.js";
 import { requireAuth } from "../middlewares/auth.js";
+import { commentRouter } from "./comment.routes.js";
 
 export const blogRouter: Router = express.Router();
 
@@ -173,3 +174,5 @@ blogRouter.put("/:id", requireAuth, validateBlogPost, putBlog);
  *         description: Blog not found.
  */
 blogRouter.delete("/:id", requireAuth, deleteBlog);
+
+blogRouter.use("/:blogId/comments", commentRouter);
