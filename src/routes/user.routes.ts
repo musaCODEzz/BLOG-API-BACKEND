@@ -1,5 +1,5 @@
 import express, { type Router } from "express";
-import { registerUser, login, getProfile, getUserBlogs } from "../controllers/user.controller.js";
+import { registerUser, login, getProfile, getUserBlogs, forgotPassword, resetPassword } from "../controllers/user.controller.js";
 import { validateUser } from "../middlewares/validateUser.js";
 import { authLimiter } from "../middlewares/rateLimiter.js";
 import requireAuth from "../middlewares/auth.js";
@@ -117,3 +117,63 @@ userRouter.get("/profile", requireAuth, getProfile);
  *         description: Author not found or invalid author ID
  */
 userRouter.get("/:id/blogs", getUserBlogs);
+
+/**
+ * @swagger
+ * /api/users/forgot-password:
+ *   post:
+ *     summary: Request a password reset token
+ *     description: Generates a time-limited (15 min) password reset token for the specified email.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "john.doe@example.com"
+ *     responses:
+ *       200:
+ *         description: Reset token generated
+ *       400:
+ *         description: Invalid email provided
+ *       429:
+ *         description: Too many requests
+ */
+userRouter.post("/forgot-password", authLimiter, forgotPassword);
+
+/**
+ * @swagger
+ * /api/users/reset-password:
+ *   post:
+ *     summary: Reset password using token
+ *     description: Sets a new password using a valid, unexpired reset token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - password
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: The raw reset token received from forgot-password
+ *               password:
+ *                 type: string
+ *                 example: "brandNewPassword123"
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid or expired token, or invalid password
+ *       429:
+ *         description: Too many requests
+ */
+userRouter.post("/reset-password", authLimiter, resetPassword);

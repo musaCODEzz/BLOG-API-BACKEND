@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import type { AuthRequest } from "../middlewares/auth.js";
-import { createNewUser, loginUser, fetchUserProfile } from "../services/user.service.js";
+import { createNewUser, loginUser, fetchUserProfile, generatePasswordResetToken, resetUserPassword } from "../services/user.service.js";
 import {fetchBlogsByAuthor} from "../services/blog.service.js";
 
 // POST /api/users/register
@@ -117,6 +117,74 @@ export const getUserBlogs = async (req: Request, res: Response, next: NextFuncti
         res.status(200).json({
             count: blogs.length,
             data: blogs
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// POST /api/users/forgot-password
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { email } = req.body || {};
+        if (!email || typeof email !== "string" || email.trim() === "") {
+            res.status(400).json({
+                error: "Please provide a valid email address.",
+                statusCode: 400,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        const resetToken = await generatePasswordResetToken(email);
+
+        // Security best practice: Always return 200 with a generic message
+        // so attackers cannot guess whether an email exists in the database.
+        res.status(200).json({
+            message: "If an account with that email exists, a password reset token has been generated.",
+            // In development, we return the token in the JSON response so you can test it directly in Postman:
+            resetToken: resetToken || undefined
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// POST /api/users/reset-password
+export const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { token, password } = req.body || {};
+        if (!token || !password || typeof token !== "string" || typeof password !== "string") {
+            res.status(400).json({
+                error: "Token and new password are required string fields.",
+                statusCode: 400,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        if (password.length < 6) {
+            res.status(400).json({
+                error: "Password must be at least 6 characters long.",
+                statusCode: 400,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        const success = await resetUserPassword(token, password);
+
+        if (!success) {
+            res.status(400).json({
+                error: "Invalid or expired password reset token.",
+                statusCode: 400,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        res.status(200).json({
+            message: "Password reset successfully. You can now log in with your new password."
         });
     } catch (error) {
         next(error);

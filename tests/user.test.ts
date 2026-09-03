@@ -115,6 +115,72 @@ describe("Auth flow", () => {
         const response = await request(app).get("/api/users/invalid-id-format/blogs");
         expect(response.status).toBe(404);
     });
+        it("generates a reset token for a registered email", async () => {
+        await request(app).post("/api/users/register").send({
+            name: "Forgot Tester",
+            email: "forgot@example.com",
+            password: "oldpassword123"
+        });
+
+        const response = await request(app)
+            .post("/api/users/forgot-password")
+            .send({ email: "forgot@example.com" });
+
+        expect(response.status).toBe(200);
+        expect(response.body).toHaveProperty("resetToken");
+        expect(typeof response.body.resetToken).toBe("string");
+    });
+
+    it("does not leak whether an unknown email exists (anti-enumeration)", async () => {
+        const response = await request(app)
+            .post("/api/users/forgot-password")
+            .send({ email: "nonexistent@example.com" });
+
+        expect(response.status).toBe(200);
+        expect(response.body.resetToken).toBeUndefined();
+    });
+
+    it("resets password using valid token and allows login with new password", async () => {
+        // 1. Register a user
+        await request(app).post("/api/users/register").send({
+            name: "Reset Tester",
+            email: "reset@example.com",
+            password: "oldpassword123"
+        });
+
+        // 2. Request reset token
+        const forgotRes = await request(app)
+            .post("/api/users/forgot-password")
+            .send({ email: "reset@example.com" });
+        const token = forgotRes.body.resetToken;
+
+        // 3. Reset password using the token
+        const resetRes = await request(app)
+            .post("/api/users/reset-password")
+            .send({ token, password: "newBrandPassword123" });
+
+        expect(resetRes.status).toBe(200);
+
+        // 4. Verify old password no longer works
+        const failedLogin = await request(app)
+            .post("/api/users/login")
+            .send({ email: "reset@example.com", password: "oldpassword123" });
+        expect(failedLogin.status).toBe(401);
+
+        // 5. Verify new password logs in successfully
+        const successfulLogin = await request(app)
+            .post("/api/users/login")
+            .send({ email: "reset@example.com", password: "newBrandPassword123" });
+        expect(successfulLogin.status).toBe(200);
+        expect(successfulLogin.body).toHaveProperty("token");
+
+        // 6. Verify one-time use: re-using the same token fails
+        const reuseRes = await request(app)
+            .post("/api/users/reset-password")
+            .send({ token, password: "anotherPassword123" });
+        expect(reuseRes.status).toBe(400);
+    });
+
 
 
 });

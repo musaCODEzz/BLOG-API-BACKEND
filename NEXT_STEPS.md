@@ -20,7 +20,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
   ├── Step 3: Automated Testing Framework (Vitest / Supertest) [✅ Completed]
   ├── Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS) [✅ Completed]
   ├── Step 5: Comments & Interaction System
-  ├── Step 6: User Profiles & Password Management
+  ├── Step 6: User Profiles & Password Management [✅ Completed]
   ├── Step 7: Dockerization & Environment Config
   └── Step 8: Cloud Deployment & CI/CD Pipeline
 ```
@@ -129,14 +129,14 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
 
 ---
 
-## Step 6: User Profiles & Password Recovery
+## Step 6: User Profiles & Password Recovery [✅ COMPLETED]
 **Goal:** Provide user management and account recovery features.
 
-### Endpoints:
-- `GET /api/users/profile` (Current logged-in user details)
-- `GET /api/users/:id/blogs` (All blogs authored by a specific user)
-- `POST /api/users/forgot-password` (Issues a time-limited reset token via email)
-- `POST /api/users/reset-password` (Sets new password using valid reset token)
+### Implemented Endpoints & Features:
+- `GET /api/users/profile` (Current authenticated user profile with password stripped)
+- `GET /api/users/:id/blogs` (Public portfolio of all blogs authored by a specific user)
+- `POST /api/users/forgot-password` (Issues a 15-minute cryptographically secure SHA-256 hashed reset token with anti-enumeration protection)
+- `POST /api/users/reset-password` (Validates token, updates password via bcrypt, and invalidates token for single-use)
 
 ---
 

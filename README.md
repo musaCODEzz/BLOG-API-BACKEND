@@ -100,12 +100,16 @@ Server URL: **`http://localhost:8000`**
 | `PUT` | `/api/blogs/:id` | ✅ | Update blog post (author only) |
 | `DELETE` | `/api/blogs/:id` | ✅ | Delete blog post (author only) |
 
-### Authentication Endpoints (`/api/users`)
+### Authentication & User Endpoints (`/api/users`)
 
 | Method | Endpoint | Auth Required | Description |
 |---|---|:---:|---|
 | `POST` | `/api/users/register` | ❌ | Register new user account (`name`, `email`, `password`) |
 | `POST` | `/api/users/login` | ❌ | Authenticate and receive JWT token (`email`, `password`) |
+| `GET` | `/api/users/profile` | ✅ | Retrieve current authenticated user profile |
+| `GET` | `/api/users/:id/blogs` | ❌ | Retrieve all blogs published by an author ID |
+| `POST` | `/api/users/forgot-password` | ❌ | Request a 15-minute password reset token |
+| `POST` | `/api/users/reset-password` | ❌ | Reset password using valid reset token |
 
 ### System Endpoints
 
@@ -180,7 +184,7 @@ For full implementation guides and code snippets, see [NEXT_STEPS.md](file:///Us
 - **Step 3: Automated Testing Suite (Vitest / Supertest)** — `[✅ Completed]`
 - **Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS)** — `[✅ Completed]`
 - **Step 5: Comments & Interaction System** — `[Next]`
-- **Step 6: User Profiles & Password Reset**
+- **Step 6: User Profiles & Password Reset** — `[✅ Completed]`
 - **Step 7: Dockerization & Cloud Deployment**
 
 ---
