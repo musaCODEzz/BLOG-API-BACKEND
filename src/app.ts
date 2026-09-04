@@ -40,6 +40,11 @@ app.get("/api-docs.json", (req: Request, res: Response) => {
   res.send(swaggerSpec);
 });
 
+// Redirect root URL to interactive Swagger documentation
+app.get("/", (_req: Request, res: Response) => {
+  res.redirect("/api-docs");
+});
+
 // routes
 app.use("/api/blogs", blogRouter);
 app.use("/api/users", userRouter);

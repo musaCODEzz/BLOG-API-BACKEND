@@ -10,6 +10,8 @@ export const blogRouter: Router = express.Router();
  * @swagger
  * /api/blogs:
  *   get:
+ *     tags:
+ *       - Blogs
  *     summary: Retrieve a paginated list of blogs
  *     description: Fetches blog posts with pagination and optional text search across title and content. Public endpoint — no authentication required.
  *     security: []
@@ -51,6 +53,8 @@ blogRouter.get("/", getBlogs);
  * @swagger
  * /api/blogs/{id}:
  *   get:
+ *     tags:
+ *       - Blogs
  *     summary: Retrieve a single blog post
  *     description: Fetches a blog post by its ID. Public endpoint — no authentication required.
  *     security: []
@@ -73,8 +77,10 @@ blogRouter.get("/:id", getBlogById);
  * @swagger
  * /api/blogs:
  *   post:
+ *     tags:
+ *       - Blogs
  *     summary: Create a new blog post
- *     description: Adds a new blog post. Requires authentication — the author is set automatically from the logged-in user's token.
+ *     description: Adds a new blog post. Requires authentication (Authorize 🔓 with token) — author is set automatically from token.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -107,8 +113,10 @@ blogRouter.post("/", requireAuth, validateBlogPost, postBlog);
  * @swagger
  * /api/blogs/{id}:
  *   put:
+ *     tags:
+ *       - Blogs
  *     summary: Update an existing blog post
- *     description: Modifies a blog post by its ID. Requires authentication — only the original author may update their own post.
+ *     description: Modifies a blog post by its ID. Requires authentication (Authorize 🔓 with token) — only the original author may update.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -152,8 +160,10 @@ blogRouter.put("/:id", requireAuth, validateBlogPost, putBlog);
  * @swagger
  * /api/blogs/{id}:
  *   delete:
+ *     tags:
+ *       - Blogs
  *     summary: Delete a blog post
- *     description: Permanently removes a blog post by its ID. Requires authentication — only the original author may delete their own post.
+ *     description: Permanently removes a blog post by its ID. Requires authentication (Authorize 🔓 with token) — only original author may delete.
  *     security:
  *       - bearerAuth: []
  *     parameters:

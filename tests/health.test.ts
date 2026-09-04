@@ -11,3 +11,12 @@ describe("GET /health", () => {
         expect(response.body).toHaveProperty("message");
     });
 });
+
+describe("GET /", () => {
+    it("redirects the root URL to /api-docs", async () => {
+        const response = await request(app).get("/");
+
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toBe("/api-docs");
+    });
+});

@@ -11,6 +11,8 @@ export const userRouter: Router = express.Router();
  * @swagger
  * /api/users/register:
  *   post:
+ *     tags:
+ *       - Users
  *     summary: Register a new user
  *     description: Creates a new user account. Requires name, email, and password.
  *     requestBody:
@@ -47,8 +49,10 @@ userRouter.post("/register", authLimiter, validateUser, registerUser);
  * @swagger
  * /api/users/login:
  *   post:
+ *     tags:
+ *       - Users
  *     summary: User login
- *     description: Authenticates a user and returns a JWT token. Requires email and password.
+ *     description: Authenticates a user and returns a JWT token. Copy the 'token' string from the response to authorize protected endpoints.
  *     requestBody:
  *       required: true
  *       content:
@@ -81,15 +85,17 @@ userRouter.post("/login", authLimiter, login);
  * @swagger
  * /api/users/profile:
  *   get:
+ *     tags:
+ *       - Users
  *     summary: Get current user profile
- *     description: Retrieves the profile details of the currently authenticated user.
+ *     description: Retrieves the profile details of the currently authenticated user. Requires a valid JWT token (Authorize 🔓 with token).
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User profile retrieved successfully
  *       401:
- *         description: Unauthorized - Missing or invalid token
+ *         description: Unauthorized - Missing or invalid Bearer token
  *       404:
  *         description: User not found
  */
@@ -100,8 +106,10 @@ userRouter.get("/profile", requireAuth, getProfile);
  * @swagger
  * /api/users/{id}/blogs:
  *   get:
+ *     tags:
+ *       - Users
  *     summary: Get all blogs by a specific author
- *     description: Retrieves all blog posts published by the specified user ID.
+ *     description: Retrieves all public blog posts published by the specified author ID.
  *     parameters:
  *       - in: path
  *         name: id
@@ -109,7 +117,7 @@ userRouter.get("/profile", requireAuth, getProfile);
  *         schema:
  *           type: string
  *         description: The MongoDB ObjectId of the author
- *         example: "6a95c73eb65652f7138e98e2"
+ *         example: "6a95bba75d5f661bef750f0e"
  *     responses:
  *       200:
  *         description: Author's blog posts retrieved successfully
@@ -122,6 +130,8 @@ userRouter.get("/:id/blogs", getUserBlogs);
  * @swagger
  * /api/users/forgot-password:
  *   post:
+ *     tags:
+ *       - Users
  *     summary: Request a password reset token
  *     description: Generates a time-limited (15 min) password reset token for the specified email.
  *     requestBody:
@@ -150,6 +160,8 @@ userRouter.post("/forgot-password", authLimiter, forgotPassword);
  * @swagger
  * /api/users/reset-password:
  *   post:
+ *     tags:
+ *       - Users
  *     summary: Reset password using token
  *     description: Sets a new password using a valid, unexpired reset token.
  *     requestBody:
