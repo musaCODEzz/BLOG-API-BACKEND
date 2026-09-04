@@ -1,4 +1,4 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
@@ -7,14 +7,14 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -23,5 +23,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build (TypeScript compile check)
+      - name: Type check & compile TypeScript
         run: npm run build
+
+      - name: Run automated test suite (Vitest + MongoMemoryServer)
+        run: npm test
+
+      - name: Validate Docker build
+        run: docker build -t blog-api:ci .
