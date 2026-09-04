@@ -21,7 +21,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
   ├── Step 4: Security Hardening (Helmet, Mongo Sanitizer, CORS) [✅ Completed]
   ├── Step 5: Comments & Interaction System [✅ Completed]
   ├── Step 6: User Profiles & Password Management [✅ Completed]
-  ├── Step 7: Dockerization & Environment Config
+  ├── Step 7: Dockerization & Environment Config [✅ Completed]
   └── Step 8: Cloud Deployment & CI/CD Pipeline
 ```
 
@@ -140,11 +140,12 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
 
 ---
 
-## Step 7: Dockerization
+## Step 7: Dockerization [✅ COMPLETED]
 **Goal:** Standardize development and production environments across all operating systems.
 
-### 1. Create `Dockerfile`:
+### 1. Hardened `Dockerfile` (Non-Root User):
 ```dockerfile
+# Stage 1: Build TypeScript
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
@@ -152,22 +153,25 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+# Stage 2: Hardened Non-Root Production Runner
 FROM node:20-alpine AS runner
 WORKDIR /app
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 RUN npm ci --omit=dev
-COPY --from=builder /app/dist ./dist
+COPY --chown=node:node --from=builder /app/dist ./dist
+USER node
 ENV PORT=8000
 EXPOSE 8000
 CMD ["node", "dist/server.js"]
 ```
 
-### 2. Create `.dockerignore`:
-```text
-node_modules
-dist
-.env
-.git
+### 2. Production `.dockerignore`:
+Includes exclusions for `node_modules`, `dist`, `.env`, macOS `.DS_Store`, tests, coverage, and Docker artifacts.
+
+### 3. Multi-Container Orchestration (`docker-compose.yml`):
+Orchestrates the Express Blog API and a local MongoDB 7 instance with persistent volume storage and automated container health checks:
+```bash
+docker compose up -d --build
 ```
 
 ---

@@ -1,0 +1,43 @@
+# 1. Dependencies & Build outputs
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist
+build
+out
+.turbo
+
+# 2. Secret & Environment files
+.env
+.env.*
+!.env.example
+
+# 3. Version control & OS artifacts (Important for macOS)
+.git
+.gitignore
+.gitattributes
+**/.DS_Store
+Thumbs.db
+
+# 4. Editor & Tooling configuration
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+
+# 5. Tests & Coverage
+tests
+testsprite_tests
+coverage
+.nyc_output
+
+# 6. Docker & CI/CD artifacts
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+.github
+.gitlab-ci.yml
+README.md
+LICENSE
