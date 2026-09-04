@@ -10,6 +10,10 @@ const options: swaggerJsdoc.Options = {
         },
         servers: [
             {
+                url: "https://blog-api-backend-mh0s.onrender.com",
+                description: "Production Server (Render)",
+            },
+            {
                 url: "http://localhost:8000",
                 description: "Local Development Server",
             },

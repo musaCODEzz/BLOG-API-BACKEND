@@ -1,6 +1,18 @@
 # Blog API Backend
 
+[![CI Pipeline](https://github.com/musaCODEzz/BLOG-API-BACKEND/actions/workflows/ci.yml/badge.svg)](https://github.com/musaCODEzz/BLOG-API-BACKEND/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/Render-Live%20Demo-brightgreen?logo=render)](https://blog-api-backend-mh0s.onrender.com/api-docs)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-blue?logo=docker)](Dockerfile)
+
 A production-grade RESTful API for managing blog posts and user authentication, built with **Node.js**, **Express 5**, **TypeScript**, and **MongoDB (Mongoose)**.
+
+---
+
+## 🌐 Live Production Deployment
+
+- **Base URL:** [https://blog-api-backend-mh0s.onrender.com](https://blog-api-backend-mh0s.onrender.com)
+- **Live Swagger Documentation:** [https://blog-api-backend-mh0s.onrender.com/api-docs](https://blog-api-backend-mh0s.onrender.com/api-docs)
+- **Live Health Status:** [https://blog-api-backend-mh0s.onrender.com/health](https://blog-api-backend-mh0s.onrender.com/health)
 
 ---
 
@@ -204,7 +216,8 @@ For full implementation guides and code snippets, see [NEXT_STEPS.md](file:///Us
 - **Step 5: Comments & Interaction System** — `[✅ Completed]`
 - **Step 6: User Profiles & Password Reset** — `[✅ Completed]`
 - **Step 7: Dockerization & Environment Config** — `[✅ Completed]`
-- **Step 8: Cloud Deployment & CI/CD Pipeline** — `[Next]`
+- **Step 8: Cloud Deployment & CI/CD Pipeline** — `[✅ Completed]`
+- **Step 9: Frontend Integration** — `[Next]`
 
 ---
 

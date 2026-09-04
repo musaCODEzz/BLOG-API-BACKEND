@@ -22,7 +22,7 @@ Now that the core v1.0 features (Authentication, Authorization, CRUD, Documentat
   ├── Step 5: Comments & Interaction System [✅ Completed]
   ├── Step 6: User Profiles & Password Management [✅ Completed]
   ├── Step 7: Dockerization & Environment Config [✅ Completed]
-  └── Step 8: Cloud Deployment & CI/CD Pipeline
+  └── Step 8: Cloud Deployment & CI/CD Pipeline [✅ Completed]
 ```
 
 ---
@@ -176,12 +176,14 @@ docker compose up -d --build
 
 ---
 
-## Step 8: Cloud Deployment & CI/CD
+## Step 8: Cloud Deployment & CI/CD [✅ COMPLETED]
 **Goal:** Continuous integration and automated zero-downtime hosting.
 
-### 1. Deployment Providers:
-- **Render / Railway / Fly.io:** Simple Node.js hosting with auto-deployment on git push.
-- **MongoDB Atlas:** Production cloud database.
+- **Live Production URL:** [https://blog-api-backend-mh0s.onrender.com](https://blog-api-backend-mh0s.onrender.com)
+- **Live Swagger Documentation:** [https://blog-api-backend-mh0s.onrender.com/api-docs](https://blog-api-backend-mh0s.onrender.com/api-docs)
+- **Database:** MongoDB Atlas (Cloud)
+- **Hosting:** Render (Docker Web Service)
+- **CI/CD:** GitHub Actions (`.github/workflows/ci.yml`) running automated Vitest tests and Docker validation on every push.
 
 ### 2. GitHub Actions Workflow (`.github/workflows/ci.yml`):
 ```yaml
