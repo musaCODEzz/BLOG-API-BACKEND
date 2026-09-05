@@ -14,14 +14,17 @@ import { swaggerSpec } from "./config/swagger.js";
 
 const app: Express = express();
 
+// Trust reverse proxy (Render, Heroku, NGINX) for accurate client IP rate limiting
+app.set("trust proxy", 1);
+
 app.use(helmet({
-    contentSecurityPolicy:false
+  contentSecurityPolicy: false
 }));
 const allowedOrigin = process.env.ALLOWED_ORIGINS || "http://localhost:3000";
 
 app.use(cors({
-     origin: allowedOrigin,
-     credentials: true,
+  origin: allowedOrigin,
+  credentials: true,
 }));
 app.use(express.json());
 app.use(mongoSanitizer);
