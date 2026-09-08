@@ -2,6 +2,8 @@
 
 [![CI Pipeline](https://github.com/musaCODEzz/BLOG-API-BACKEND/actions/workflows/ci.yml/badge.svg)](https://github.com/musaCODEzz/BLOG-API-BACKEND/actions/workflows/ci.yml)
 [![Live Demo](https://img.shields.io/badge/Render-Live%20Demo-brightgreen?logo=render)](https://blog-api-backend-mh0s.onrender.com/api-docs)
+[![Frontend Client](https://img.shields.io/badge/Vercel-Frontend%20App-black?logo=vercel)](https://blog-api-frontend-neon.vercel.app/)
+[![Email Delivery](https://img.shields.io/badge/Resend-Email%20Service-black?logo=resend)](https://resend.com)
 [![Docker](https://img.shields.io/badge/Docker-Containerized-blue?logo=docker)](Dockerfile)
 [![TypeScript](https://img.shields.io/badge/TypeScript-7.0-blue?logo=typescript)](tsconfig.json)
 [![Express](https://img.shields.io/badge/Express-5.2-lightgrey?logo=express)](package.json)
@@ -13,11 +15,12 @@ A production-grade, enterprise-hardened RESTful API for modern blogging and comm
 
 ## 🌐 Live Production Deployment
 
-The API is fully deployed in the cloud on **Render** backed by **MongoDB Atlas** and fronted by Cloudflare SSL:
+The API and web client are fully deployed in cloud production:
 
 | Resource | URL | Description |
 |---|---|---|
-| **Base API** | [https://blog-api-backend-mh0s.onrender.com](https://blog-api-backend-mh0s.onrender.com) | Production endpoint root |
+| **Frontend Web App** | [https://blog-api-frontend-neon.vercel.app](https://blog-api-frontend-neon.vercel.app) | Live StackPulse web client deployed on Vercel |
+| **Base API** | [https://blog-api-backend-mh0s.onrender.com](https://blog-api-backend-mh0s.onrender.com) | Production API endpoint root on Render |
 | **Interactive Docs** | [https://blog-api-backend-mh0s.onrender.com/api-docs](https://blog-api-backend-mh0s.onrender.com/api-docs) | Live Swagger OpenAPI 3.0 explorer with interactive testing |
 | **Health Check** | [https://blog-api-backend-mh0s.onrender.com/health](https://blog-api-backend-mh0s.onrender.com/health) | Uptime and service status monitor |
 | **Raw OpenAPI Spec** | [https://blog-api-backend-mh0s.onrender.com/api-docs.json](https://blog-api-backend-mh0s.onrender.com/api-docs.json) | JSON schema for automated client generation |
@@ -173,8 +176,8 @@ The API is fully deployed in the cloud on **Render** backed by **MongoDB Atlas**
 ---
 
 #### `POST /api/users/forgot-password`
-- **Access:** Public
-- **Description:** Initiates account recovery by generating a cryptographically secure 15-minute reset token.
+- **Access:** Public (Rate limited: 10 req / 15 min)
+- **Description:** Initiates account recovery. Generates a cryptographically secure 15-minute token (`SHA-256`) and dispatches a responsive HTML email via **Resend** containing a secure reset link (`${CLIENT_URL}/reset-password?token=...`).
 - **Request Body:**
   ```json
   {
@@ -185,7 +188,7 @@ The API is fully deployed in the cloud on **Render** backed by **MongoDB Atlas**
   - `200 OK`:
     ```json
     {
-      "message": "If an account with that email exists, a password reset token has been generated.",
+      "message": "If an account with that email exists, a password reset email has been sent.",
       "resetToken": "c4d8e7b..."
     }
     ```
@@ -461,7 +464,7 @@ docker compose down
 The project includes an extensive automated integration test suite powered by **Vitest**, **Supertest**, and **MongoMemoryServer**. Every test runs against an isolated in-memory MongoDB instance with automatic database tear-down between tests:
 
 ```bash
-# Run all 21 integration tests once
+# Run all 22 integration tests once
 npm test
 
 # Run tests in interactive watch mode
@@ -527,6 +530,7 @@ blog-api-backend/
 │   └── services/
 │       ├── blog.service.ts     # Blog DB operations, pagination, search, and sorting
 │       ├── comment.service.ts  # Comment DB operations & author authorization
+│       ├── email.service.ts    # Transactional email service using Resend SDK
 │       └── user.service.ts     # User DB operations, password reset tokens
 ├── tests/
 │   ├── setup.ts                # In-memory MongoDB lifecycle hooks for Vitest
