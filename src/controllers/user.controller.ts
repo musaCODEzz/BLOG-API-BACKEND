@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 import type { AuthRequest } from "../middlewares/auth.js";
 import { createNewUser, loginUser, fetchUserProfile, generatePasswordResetToken, resetUserPassword } from "../services/user.service.js";
-import {fetchBlogsByAuthor} from "../services/blog.service.js";
+import { fetchBlogsByAuthor } from "../services/blog.service.js";
+import { sendPasswordResetEmail } from "../services/email.service.js";
 
 // POST /api/users/register
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -136,14 +137,23 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
             return;
         }
 
-        const resetToken = await generatePasswordResetToken(email);
+        const resetData = await generatePasswordResetToken(email);
+
+        // If user exists, send password reset email via Resend
+        if (resetData) {
+            await sendPasswordResetEmail({
+                email,
+                name: resetData.name,
+                resetToken: resetData.resetToken
+            });
+        }
 
         // Security best practice: Always return 200 with a generic message
         // so attackers cannot guess whether an email exists in the database.
         res.status(200).json({
-            message: "If an account with that email exists, a password reset token has been generated.",
+            message: "If an account with that email exists, a password reset email has been sent.",
             // In development, we return the token in the JSON response so you can test it directly in Postman:
-            resetToken: resetToken || undefined
+            resetToken: resetData?.resetToken || undefined
         });
     } catch (error) {
         next(error);

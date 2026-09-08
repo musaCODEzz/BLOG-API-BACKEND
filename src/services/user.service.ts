@@ -78,7 +78,7 @@ export const generatePasswordResetToken = async (email: string) => {
     
     await user.save();
 
-    return rawResetToken; // Return the raw token to be sent via email
+    return { resetToken: rawResetToken, name: user.name };
 };
 
 // 4. RESET PASSWORD — Validates token, hashes new password, and invalidates token
