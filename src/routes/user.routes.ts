@@ -1,5 +1,5 @@
 import express, { type Router } from "express";
-import { registerUser, login, getProfile, getUserBlogs, forgotPassword, resetPassword } from "../controllers/user.controller.js";
+import { registerUser, login, getProfile, getUserBlogs, forgotPassword, resetPassword, googleLogin } from "../controllers/user.controller.js";
 import { validateUser } from "../middlewares/validateUser.js";
 import { authLimiter } from "../middlewares/rateLimiter.js";
 import requireAuth from "../middlewares/auth.js";
@@ -189,3 +189,37 @@ userRouter.post("/forgot-password", authLimiter, forgotPassword);
  *         description: Too many requests
  */
 userRouter.post("/reset-password", authLimiter, resetPassword);
+
+/**
+ * @swagger
+ * /api/users/google-login:
+ *   post:
+ *     tags:
+ *       - Users
+ *     summary: Google OAuth Sign-In / Registration
+ *     description: Authenticates or registers a user via a verified Google ID token (credential). Returns a standard JWT token and user profile.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - credential
+ *             properties:
+ *               credential:
+ *                 type: string
+ *                 description: The Google ID token (credential) returned by Google Identity Services on the frontend
+ *                 example: "eyJhbGciOiJSUzI1NiIsImtpZCI..."
+ *     responses:
+ *       200:
+ *         description: Google login successful
+ *       400:
+ *         description: Google credential token is required
+ *       401:
+ *         description: Invalid, expired, or unverified Google token
+ *       429:
+ *         description: Too many requests from this IP
+ */
+userRouter.post("/google-login", authLimiter, googleLogin);
+

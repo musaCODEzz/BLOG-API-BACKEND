@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import type { AuthRequest } from "../middlewares/auth.js";
-import { createNewUser, loginUser, fetchUserProfile, generatePasswordResetToken, resetUserPassword } from "../services/user.service.js";
+import { createNewUser, loginUser, fetchUserProfile, generatePasswordResetToken, resetUserPassword, googleAuthUser } from "../services/user.service.js";
 import { fetchBlogsByAuthor } from "../services/blog.service.js";
 import { sendPasswordResetEmail } from "../services/email.service.js";
 
@@ -197,6 +197,44 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
             message: "Password reset successfully. You can now log in with your new password."
         });
     } catch (error) {
+        next(error);
+    }
+};
+
+// POST /api/users/google-login
+export const googleLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { credential } = req.body || {};
+
+        if (!credential || typeof credential !== "string") {
+            res.status(400).json({
+                error: "Google credential token is required.",
+                statusCode: 400,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        const { token, user } = await googleAuthUser(credential);
+
+        res.status(200).json({
+            message: "Google login successful!",
+            token,
+            user
+        });
+    } catch (error: any) {
+        if (
+            error.message.includes("Google") ||
+            error.message.includes("Invalid or expired") ||
+            error.message.includes("audience mismatch")
+        ) {
+            res.status(401).json({
+                error: error.message,
+                statusCode: 401,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
         next(error);
     }
 };

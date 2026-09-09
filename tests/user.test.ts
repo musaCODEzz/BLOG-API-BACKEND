@@ -1,5 +1,5 @@
 // tests/user.test.ts
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import app from "../src/app.js";
 
@@ -181,6 +181,84 @@ describe("Auth flow", () => {
         expect(reuseRes.status).toBe(400);
     });
 
+    describe("Google OAuth flow", () => {
+        it("rejects google login without credential", async () => {
+            const response = await request(app)
+                .post("/api/users/google-login")
+                .send({});
+            expect(response.status).toBe(400);
+            expect(response.body.error).toContain("credential");
+        });
 
+        it("rejects invalid or expired google token", async () => {
+            vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+                new Response(JSON.stringify({ error_description: "Invalid Value" }), { status: 400 })
+            );
+
+            const response = await request(app)
+                .post("/api/users/google-login")
+                .send({ credential: "invalid_dummy_token" });
+
+            expect(response.status).toBe(401);
+            expect(response.body.error).toContain("Invalid or expired");
+        });
+
+        it("registers and logs in a new user with valid google credential", async () => {
+            const mockGooglePayload = {
+                email: "googleuser@example.com",
+                name: "Google Explorer",
+                picture: "https://lh3.googleusercontent.com/avatar.jpg",
+                sub: "google-123456789",
+                email_verified: "true"
+            };
+
+            vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+                new Response(JSON.stringify(mockGooglePayload), { status: 200 })
+            );
+
+            const response = await request(app)
+                .post("/api/users/google-login")
+                .send({ credential: "valid_mock_google_token" });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty("token");
+            expect(response.body.user).toHaveProperty("email", "googleuser@example.com");
+            expect(response.body.user).toHaveProperty("name", "Google Explorer");
+            expect(response.body.user).toHaveProperty("avatar", "https://lh3.googleusercontent.com/avatar.jpg");
+            expect(response.body.user).toHaveProperty("authProvider", "google");
+        });
+
+        it("links googleId and avatar to existing user with same email", async () => {
+            // First create a regular user
+            await request(app).post("/api/users/register").send({
+                name: "Pre-existing User",
+                email: "linkme@example.com",
+                password: "password123"
+            });
+
+            // Now sign in with Google with matching email
+            const mockGooglePayload = {
+                email: "linkme@example.com",
+                name: "Google Name",
+                picture: "https://lh3.googleusercontent.com/pic.jpg",
+                sub: "google-987654321",
+                email_verified: true
+            };
+
+            vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+                new Response(JSON.stringify(mockGooglePayload), { status: 200 })
+            );
+
+            const response = await request(app)
+                .post("/api/users/google-login")
+                .send({ credential: "mock_link_token" });
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty("token");
+            expect(response.body.user).toHaveProperty("email", "linkme@example.com");
+            expect(response.body.user).toHaveProperty("googleId", "google-987654321");
+            expect(response.body.user).toHaveProperty("avatar", "https://lh3.googleusercontent.com/pic.jpg");
+        });
+    });
 
 });

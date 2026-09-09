@@ -3,7 +3,10 @@ import { Schema, model, type Document } from 'mongoose';
 export interface IUser extends Document {
     name: string;
     email: string;
-    password: string;
+    password?: string;
+    googleId?: string;
+    avatar?: string;
+    authProvider: 'local' | 'google';
     resetPasswordToken?: string | undefined;
     resetPasswordExpires?: Date | undefined;
     createdAt: Date;
@@ -27,9 +30,25 @@ const UserSchema = new Schema<IUser>(
         },
         password: {
             type: String,
-            required: [true, 'Password is required'],
+            required: function (this: IUser) {
+                return this.authProvider !== 'google';
+            },
             minlength: [6, 'Password must be at least 6 characters long'],
             select: false // This ensures that the password is not returned in queries by default
+        },
+        googleId: {
+            type: String,
+            sparse: true,
+            unique: true
+        },
+        avatar: {
+            type: String,
+            default: ''
+        },
+        authProvider: {
+            type: String,
+            enum: ['local', 'google'],
+            default: 'local'
         },
         resetPasswordToken: {
             type: String,

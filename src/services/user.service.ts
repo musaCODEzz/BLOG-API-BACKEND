@@ -35,7 +35,7 @@ export const loginUser = async (email: string, password: string) => {
     // Select password field explicitly because of select: false in the schema
     const user = await User.findOne({ email: normalizedEmail }).select("+password");
     
-    if (!user) {
+    if (!user || !user.password) {
         throw new Error("Invalid email or password.");
     }
 
@@ -108,4 +108,88 @@ export const resetUserPassword = async (token: string, newPassword: string) => {
     await user.save();
 
     return true; // Password reset successful
+};
+
+// 5. GOOGLE OAUTH LOGIN — Verifies Google ID token, links or creates user, and returns JWT
+export const googleAuthUser = async (credential: string) => {
+    if (!credential || typeof credential !== "string") {
+        throw new Error("Google credential token is required.");
+    }
+
+    // Verify token with Google's official tokeninfo API
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+
+    if (!response.ok) {
+        throw new Error("Invalid or expired Google token.");
+    }
+
+    const payload = (await response.json()) as {
+        aud?: string;
+        email?: string;
+        name?: string;
+        picture?: string;
+        sub?: string;
+        email_verified?: boolean | string;
+    };
+
+    // Verify Google client ID if configured in .env
+    const expectedClientId = process.env.GOOGLE_CLIENT_ID;
+    if (expectedClientId && payload.aud !== expectedClientId) {
+        throw new Error("Google token audience mismatch.");
+    }
+
+    const { email, name, picture, sub: googleId, email_verified } = payload;
+
+    if (!email) {
+        throw new Error("Google account does not have an email address.");
+    }
+
+    if (email_verified === "false" || email_verified === false) {
+        throw new Error("Google email is not verified.");
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Find existing user by email or googleId
+    let user = await User.findOne({ email: normalizedEmail });
+    if (!user && googleId) {
+        user = await User.findOne({ googleId });
+    }
+
+    if (user) {
+        // Link googleId and avatar if not already set
+        let updated = false;
+        if (!user.googleId && googleId) {
+            user.googleId = googleId;
+            updated = true;
+        }
+        if (picture && !user.avatar) {
+            user.avatar = picture;
+            updated = true;
+        }
+        if (updated) {
+            await user.save();
+        }
+    } else {
+        // Create new user authenticated via Google
+        user = new User({
+            name: (name || "Google User").trim(),
+            email: normalizedEmail,
+            googleId,
+            avatar: picture || "",
+            authProvider: "google"
+        });
+        await user.save();
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error("JWT_SECRET is missing in environment variables.");
+    }
+
+    const token = jwt.sign({ userId: user._id }, secret, { expiresIn: "7d" });
+    const userObj = user.toObject();
+    delete (userObj as any).password;
+
+    return { token, user: userObj };
 };
