@@ -6,6 +6,8 @@ export interface IBlogPost extends Document {
     title: string;
     content: string;
     author: Types.ObjectId; // This can be a reference to a User document or just a string
+    likes: Types.ObjectId[];
+    likesCount: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -27,6 +29,17 @@ const blogSchema = new Schema<IBlogPost>(
             ref: "User",
             index: true,
             required: true
+        },
+        likes: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "User"
+            }
+        ],
+        likesCount: {
+            type: Number,
+            default: 0,
+            index: true
         }
     },
     {

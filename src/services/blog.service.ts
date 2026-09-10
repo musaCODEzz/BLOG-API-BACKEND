@@ -21,7 +21,7 @@ export const fetchAllBlogs = async ({ page, limit, search, sort = "-createdAt" }
     if (sort) {
         const isDescending = sort.startsWith("-");
         const fieldName = isDescending ? sort.substring(1) : sort;
-        const allowedSortFields = ["createdAt", "title", "updatedAt"];
+        const allowedSortFields = ["createdAt", "title", "updatedAt", "likesCount"];
         if (allowedSortFields.includes(fieldName)) {
             sortOption = { [fieldName]: isDescending ? -1 : 1 };
         }
@@ -123,4 +123,40 @@ export const fetchBlogsByAuthor = async (authorId: string) => {
         .populate("author", "name email")
         .sort({ createdAt: -1 });
     return blogs;
+};
+
+// 7. TOGGLE LIKE — Adds or removes a user's like on a blog post
+export const toggleBlogLike = async (blogId: string, userId: string) => {
+    if (!mongoose.Types.ObjectId.isValid(blogId)) {
+        return null;
+    }
+
+    const blog = await Blog.findById(blogId);
+    if (!blog) {
+        return null;
+    }
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const hasLiked = blog.likes && blog.likes.some((id) => id.toString() === userId);
+
+    if (!blog.likes) {
+        blog.likes = [];
+    }
+
+    if (hasLiked) {
+        // Unlike: remove userId from likes array
+        blog.likes = blog.likes.filter((id) => id.toString() !== userId);
+        blog.likesCount = Math.max(0, (blog.likesCount || 0) - 1);
+    } else {
+        // Like: add userId to likes array
+        blog.likes.push(userObjectId);
+        blog.likesCount = (blog.likesCount || 0) + 1;
+    }
+
+    await blog.save();
+
+    return {
+        isLiked: !hasLiked,
+        likesCount: blog.likesCount
+    };
 };

@@ -1,5 +1,5 @@
 import express, { type Router } from "express";
-import { getBlogs, getBlogById, postBlog, putBlog, deleteBlog } from "../controllers/blog.controller.js";
+import { getBlogs, getBlogById, postBlog, putBlog, deleteBlog, likeBlog } from "../controllers/blog.controller.js";
 import { validateBlogPost } from "../middlewares/validateBlog.js";
 import { requireAuth } from "../middlewares/auth.js";
 import { commentRouter } from "./comment.routes.js";
@@ -184,5 +184,46 @@ blogRouter.put("/:id", requireAuth, validateBlogPost, putBlog);
  *         description: Blog not found.
  */
 blogRouter.delete("/:id", requireAuth, deleteBlog);
+
+/**
+ * @swagger
+ * /api/blogs/{id}/like:
+ *   post:
+ *     tags:
+ *       - Blogs
+ *     summary: Toggle like on a blog post
+ *     description: Toggles like/unlike on a blog post for the authenticated user. Returns whether the post is currently liked by the caller and the total likesCount.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the blog post to like/unlike
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Like toggled successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Blog post liked successfully."
+ *                 isLiked:
+ *                   type: boolean
+ *                   example: true
+ *                 likesCount:
+ *                   type: integer
+ *                   example: 1
+ *       401:
+ *         description: Unauthorized — missing or invalid token.
+ *       404:
+ *         description: Blog not found.
+ */
+blogRouter.post("/:id/like", requireAuth, likeBlog);
 
 blogRouter.use("/:blogId/comments", commentRouter);

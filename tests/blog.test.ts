@@ -79,4 +79,42 @@ describe("Blog CRUD", () => {
 
         expect(deleteRes.status).toBe(200);
     });
+
+    it("toggles likes on a blog post and rejects unauthenticated requests", async () => {
+        const authorToken = await registerAndLogin("likeauthor@example.com");
+        const readerToken = await registerAndLogin("likereader@example.com");
+
+        // 1. Create a blog post
+        const createRes = await request(app)
+            .post("/api/blogs")
+            .set("Authorization", `Bearer ${authorToken}`)
+            .send({ title: "Likable Post", content: "Like me please" });
+        const postId = createRes.body._id;
+
+        // 2. Unauthenticated like fails (401)
+        const unauthRes = await request(app).post(`/api/blogs/${postId}/like`);
+        expect(unauthRes.status).toBe(401);
+
+        // 3. First like adds like (200, isLiked: true, likesCount: 1)
+        const likeRes = await request(app)
+            .post(`/api/blogs/${postId}/like`)
+            .set("Authorization", `Bearer ${readerToken}`);
+        expect(likeRes.status).toBe(200);
+        expect(likeRes.body.isLiked).toBe(true);
+        expect(likeRes.body.likesCount).toBe(1);
+
+        // 4. Second like toggles it off / unlikes (200, isLiked: false, likesCount: 0)
+        const unlikeRes = await request(app)
+            .post(`/api/blogs/${postId}/like`)
+            .set("Authorization", `Bearer ${readerToken}`);
+        expect(unlikeRes.status).toBe(200);
+        expect(unlikeRes.body.isLiked).toBe(false);
+        expect(unlikeRes.body.likesCount).toBe(0);
+
+        // 5. Liking a non-existent blog post returns 404
+        const notFoundRes = await request(app)
+            .post("/api/blogs/64f1a2b3c4d5e6f7a8b9c0d1/like")
+            .set("Authorization", `Bearer ${readerToken}`);
+        expect(notFoundRes.status).toBe(404);
+    });
 });

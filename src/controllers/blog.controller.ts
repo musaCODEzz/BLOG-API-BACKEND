@@ -1,6 +1,6 @@
 import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middlewares/auth.js";
-import { fetchAllBlogs, fetchBlogById, createNewBlog, updateBlogById, deleteBlogById } from "../services/blog.service.js";
+import { fetchAllBlogs, fetchBlogById, createNewBlog, updateBlogById, deleteBlogById, toggleBlogLike } from "../services/blog.service.js";
 
 // GET /api/blogs?page=1&limit=10&search=typescript&sort=-createdAt
 export const getBlogs = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -112,6 +112,33 @@ export const deleteBlog = async (req: AuthRequest, res: Response, next: NextFunc
             });
             return;
         }
+        next(error);
+    }
+};
+
+// POST /api/blogs/:id/like
+export const likeBlog = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const blogId = req.params.id as string;
+        const userId = req.userId as string;
+
+        const result = await toggleBlogLike(blogId, userId);
+
+        if (!result) {
+            res.status(404).json({
+                error: "Blog post not found.",
+                statusCode: 404,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        res.status(200).json({
+            message: result.isLiked ? "Blog post liked successfully." : "Blog post unliked successfully.",
+            isLiked: result.isLiked,
+            likesCount: result.likesCount
+        });
+    } catch (error) {
         next(error);
     }
 };
