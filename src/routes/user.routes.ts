@@ -1,5 +1,5 @@
 import express, { type Router } from "express";
-import { registerUser, login, getProfile, getUserBlogs, forgotPassword, resetPassword, googleLogin } from "../controllers/user.controller.js";
+import { registerUser, login, getProfile, putProfile, getUserBookmarks, getUserBlogs, forgotPassword, resetPassword, googleLogin } from "../controllers/user.controller.js";
 import { validateUser } from "../middlewares/validateUser.js";
 import { authLimiter } from "../middlewares/rateLimiter.js";
 import requireAuth from "../middlewares/auth.js";
@@ -100,6 +100,90 @@ userRouter.post("/login", authLimiter, login);
  *         description: User not found
  */
 userRouter.get("/profile", requireAuth, getProfile);
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   put:
+ *     tags:
+ *       - Users
+ *     summary: Update current user profile
+ *     description: Modifies bio, avatar, social handles (website, github, twitter), name, and optionally changes the password.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Jane Doe"
+ *               bio:
+ *                 type: string
+ *                 example: "Staff Software Engineer building resilient microservices."
+ *               avatar:
+ *                 type: string
+ *                 example: "https://images.unsplash.com/photo-1534528741775-53994a69daeb"
+ *               website:
+ *                 type: string
+ *                 example: "https://janedoe.dev"
+ *               github:
+ *                 type: string
+ *                 example: "janedoe"
+ *               twitter:
+ *                 type: string
+ *                 example: "janedoe_dev"
+ *               oldPassword:
+ *                 type: string
+ *                 example: "password123"
+ *               newPassword:
+ *                 type: string
+ *                 example: "newStrongPassword123"
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       400:
+ *         description: Invalid password or validation error
+ *       401:
+ *         description: Unauthorized - Missing or invalid Bearer token
+ *       404:
+ *         description: User not found
+ */
+userRouter.put("/profile", requireAuth, putProfile);
+
+/**
+ * @swagger
+ * /api/users/bookmarks:
+ *   get:
+ *     tags:
+ *       - Users
+ *     summary: Get caller's saved bookmarks
+ *     description: Retrieves the authenticated user's bookmarked blog posts with pagination and populated author details.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: Saved bookmarks retrieved successfully
+ *       401:
+ *         description: Unauthorized - Missing or invalid Bearer token
+ */
+userRouter.get("/bookmarks", requireAuth, getUserBookmarks);
 
 
 /**

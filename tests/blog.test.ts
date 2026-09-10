@@ -176,4 +176,54 @@ describe("Blog CRUD", () => {
         expect(tsTag).toBeDefined();
         expect(tsTag.count).toBe(2);
     });
+
+    it("auto-calculates reading time, increments view count on fetch, and supports sorting by views", async () => {
+        const token = await registerAndLogin("metricauthor@example.com");
+
+        // 1. Create a short post and a longer post
+        const shortPostRes = await request(app)
+            .post("/api/blogs")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Short Quick Post",
+                content: "This is a very short article with just a few words."
+            });
+
+        expect(shortPostRes.status).toBe(201);
+        expect(shortPostRes.body).toHaveProperty("readTime", "1 min read");
+        expect(shortPostRes.body).toHaveProperty("views", 0);
+        const shortPostId = shortPostRes.body._id;
+
+        // Long article (~450 words) should calculate ~3 min read
+        const longContent = ("word ".repeat(450)).trim();
+        const longPostRes = await request(app)
+            .post("/api/blogs")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Long In-Depth Architecture",
+                content: longContent
+            });
+
+        expect(longPostRes.status).toBe(201);
+        expect(longPostRes.body).toHaveProperty("readTime", "3 min read");
+        const longPostId = longPostRes.body._id;
+
+        // 2. Fetch short post multiple times and verify view counter increments
+        const view1 = await request(app).get(`/api/blogs/${shortPostId}`);
+        expect(view1.status).toBe(200);
+        expect(view1.body.views).toBe(1);
+
+        const view2 = await request(app).get(`/api/blogs/${shortPostId}`);
+        expect(view2.status).toBe(200);
+        expect(view2.body.views).toBe(2);
+
+        // Fetch long post once
+        await request(app).get(`/api/blogs/${longPostId}`);
+
+        // 3. Sort by views descending (shortPost with 2 views should come before longPost with 1 view)
+        const sortRes = await request(app).get("/api/blogs?sort=-views");
+        expect(sortRes.status).toBe(200);
+        expect(sortRes.body.data[0]._id).toBe(shortPostId);
+        expect(sortRes.body.data[0].views).toBe(2);
+    });
 });

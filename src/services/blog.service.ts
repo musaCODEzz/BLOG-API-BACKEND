@@ -25,7 +25,7 @@ export const fetchAllBlogs = async ({ page, limit, search, sort = "-createdAt", 
     if (sort) {
         const isDescending = sort.startsWith("-");
         const fieldName = isDescending ? sort.substring(1) : sort;
-        const allowedSortFields = ["createdAt", "title", "updatedAt", "likesCount"];
+        const allowedSortFields = ["createdAt", "title", "updatedAt", "likesCount", "views"];
         if (allowedSortFields.includes(fieldName)) {
             sortOption = { [fieldName]: isDescending ? -1 : 1 };
         }
@@ -33,7 +33,7 @@ export const fetchAllBlogs = async ({ page, limit, search, sort = "-createdAt", 
 
     const [blogs, totalResults] = await Promise.all([
         Blog.find(filter)
-            .populate("author", "name email")
+            .populate("author", "name email avatar bio")
             .skip(skip)
             .limit(limit)
             .sort(sortOption),
@@ -56,17 +56,29 @@ export const fetchAllBlogs = async ({ page, limit, search, sort = "-createdAt", 
 };
 
 
-// 2. GET BY ID — Fetches a single blog post with populated author details
+// Reading time calculation helper (~200 words per minute)
+export const calculateReadingTime = (content: string): string => {
+    const words = content.trim().split(/\s+/).filter(Boolean).length;
+    const minutes = Math.max(1, Math.ceil(words / 200));
+    return `${minutes} min read`;
+};
+
+// 2. GET BY ID — Fetches a single blog post and increments view counter
 export const fetchBlogById = async (id: string) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return null;
     }
-    return await Blog.findById(id).populate("author", "name email");
+    return await Blog.findByIdAndUpdate(
+        id,
+        { $inc: { views: 1 } },
+        { returnDocument: "after" }
+    ).populate("author", "name email avatar bio");
 };
 
 // 3. CREATE
 export const createNewBlog = async (title: string, content: string, authorId: string, tags: string[] = []) => {
-    return await Blog.create({ title, content, author: authorId, tags });
+    const readTime = calculateReadingTime(content);
+    return await Blog.create({ title, content, author: authorId, tags, readTime, views: 0 });
 };
 
 // 4. UPDATE — only the original author may update their own post
@@ -89,7 +101,12 @@ export const updateBlogById = async (id: string, title: string, content: string,
         throw new Error("Not authorized to modify this post.");
     }
 
-    const updateData: { title: string; content: string; tags?: string[] } = { title, content };
+    const readTime = calculateReadingTime(content);
+    const updateData: { title: string; content: string; readTime: string; tags?: string[] } = {
+        title,
+        content,
+        readTime
+    };
     if (tags !== undefined) {
         updateData.tags = tags;
     }

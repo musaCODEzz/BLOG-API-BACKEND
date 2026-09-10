@@ -1,4 +1,6 @@
 import User from "../models/user.model.js";
+import Blog from "../models/blog.model.js";
+import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
@@ -192,4 +194,138 @@ export const googleAuthUser = async (credential: string) => {
     delete (userObj as any).password;
 
     return { token, user: userObj };
+};
+
+// 6. UPDATE USER PROFILE — Updates name, bio, avatar, social links, and handles password change
+export interface UpdateProfileData {
+    name?: string;
+    bio?: string;
+    avatar?: string;
+    website?: string;
+    github?: string;
+    twitter?: string;
+    oldPassword?: string;
+    newPassword?: string;
+}
+
+export const updateUserProfile = async (userId: string, data: UpdateProfileData) => {
+    const user = await User.findById(userId).select("+password");
+    if (!user) {
+        return null;
+    }
+
+    // Password change verification
+    if (data.newPassword) {
+        if (!data.oldPassword) {
+            throw new Error("Current password is required to set a new password.");
+        }
+        if (data.newPassword.length < 6) {
+            throw new Error("New password must be at least 6 characters long.");
+        }
+        if (user.password) {
+            const isMatch = await bcrypt.compare(data.oldPassword, user.password);
+            if (!isMatch) {
+                throw new Error("Incorrect current password.");
+            }
+        }
+        user.password = await bcrypt.hash(data.newPassword, 10);
+    }
+
+    if (data.name !== undefined && data.name.trim() !== "") {
+        user.name = data.name.trim();
+    }
+    if (data.bio !== undefined) {
+        user.bio = data.bio.trim();
+    }
+    if (data.avatar !== undefined) {
+        user.avatar = data.avatar.trim();
+    }
+    if (data.website !== undefined) {
+        user.website = data.website.trim();
+    }
+    if (data.github !== undefined) {
+        user.github = data.github.trim();
+    }
+    if (data.twitter !== undefined) {
+        user.twitter = data.twitter.trim();
+    }
+
+    await user.save();
+
+    const userObj = user.toObject();
+    delete (userObj as any).password;
+    delete (userObj as any).resetPasswordToken;
+    delete (userObj as any).resetPasswordExpires;
+
+    return userObj;
+};
+
+// 7. TOGGLE BOOKMARK — Saves or removes a post from user's reading list
+export const toggleUserBookmark = async (userId: string, blogId: string) => {
+    if (!mongoose.Types.ObjectId.isValid(blogId)) {
+        return null;
+    }
+
+    const blogExists = await Blog.exists({ _id: blogId });
+    if (!blogExists) {
+        return null;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        return null;
+    }
+
+    if (!user.bookmarks) {
+        user.bookmarks = [];
+    }
+
+    const blogObjectId = new mongoose.Types.ObjectId(blogId);
+    const hasBookmarked = user.bookmarks.some((id) => id.toString() === blogId);
+
+    if (hasBookmarked) {
+        user.bookmarks = user.bookmarks.filter((id) => id.toString() !== blogId);
+    } else {
+        user.bookmarks.push(blogObjectId);
+    }
+
+    await user.save();
+
+    return {
+        isBookmarked: !hasBookmarked,
+        totalBookmarks: user.bookmarks.length
+    };
+};
+
+// 8. GET BOOKMARKED BLOGS — Returns paginated list of saved articles
+export const fetchUserBookmarks = async (userId: string, page: number = 1, limit: number = 10) => {
+    const user = await User.findById(userId).populate({
+        path: "bookmarks",
+        populate: {
+            path: "author",
+            select: "name email avatar bio"
+        }
+    });
+
+    if (!user) {
+        return null;
+    }
+
+    const allBookmarks = (user.bookmarks || []).filter(Boolean);
+    const total = allBookmarks.length;
+    const skip = (page - 1) * limit;
+    const paginatedBlogs = allBookmarks.slice(skip, skip + limit);
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+        blogs: paginatedBlogs,
+        pagination: {
+            total,
+            page,
+            limit,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+        }
+    };
 };

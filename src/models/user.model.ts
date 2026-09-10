@@ -1,4 +1,4 @@
-import { Schema, model, type Document } from 'mongoose';
+import { Schema, model, type Document, Types } from 'mongoose';
 
 export interface IUser extends Document {
     name: string;
@@ -6,6 +6,11 @@ export interface IUser extends Document {
     password?: string;
     googleId?: string;
     avatar?: string;
+    bio?: string;
+    website?: string;
+    github?: string;
+    twitter?: string;
+    bookmarks: Types.ObjectId[];
     authProvider: 'local' | 'google';
     resetPasswordToken?: string | undefined;
     resetPasswordExpires?: Date | undefined;
@@ -45,6 +50,29 @@ const UserSchema = new Schema<IUser>(
             type: String,
             default: ''
         },
+        bio: {
+            type: String,
+            default: '',
+            maxlength: [300, 'Bio cannot exceed 300 characters']
+        },
+        website: {
+            type: String,
+            default: ''
+        },
+        github: {
+            type: String,
+            default: ''
+        },
+        twitter: {
+            type: String,
+            default: ''
+        },
+        bookmarks: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: 'Blog'
+            }
+        ],
         authProvider: {
             type: String,
             enum: ['local', 'google'],

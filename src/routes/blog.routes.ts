@@ -3,6 +3,7 @@ import { getBlogs, getBlogById, postBlog, putBlog, deleteBlog, likeBlog, getPopu
 import { validateBlogPost } from "../middlewares/validateBlog.js";
 import { requireAuth } from "../middlewares/auth.js";
 import { commentRouter } from "./comment.routes.js";
+import { bookmarkBlog } from "../controllers/user.controller.js";
 
 export const blogRouter: Router = express.Router();
 
@@ -272,5 +273,46 @@ blogRouter.delete("/:id", requireAuth, deleteBlog);
  *         description: Blog not found.
  */
 blogRouter.post("/:id/like", requireAuth, likeBlog);
+
+/**
+ * @swagger
+ * /api/blogs/{id}/bookmark:
+ *   post:
+ *     tags:
+ *       - Blogs
+ *     summary: Toggle bookmark / save post
+ *     description: Toggles saving/removing a blog post to/from the caller's reading list.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the blog post to bookmark or unbookmark
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bookmark state updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Post saved to bookmarks."
+ *                 isBookmarked:
+ *                   type: boolean
+ *                   example: true
+ *                 totalBookmarks:
+ *                   type: integer
+ *                   example: 1
+ *       401:
+ *         description: Unauthorized — missing or invalid token.
+ *       404:
+ *         description: Blog post not found.
+ */
+blogRouter.post("/:id/bookmark", requireAuth, bookmarkBlog);
 
 blogRouter.use("/:blogId/comments", commentRouter);

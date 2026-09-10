@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import type { AuthRequest } from "../middlewares/auth.js";
-import { createNewUser, loginUser, fetchUserProfile, generatePasswordResetToken, resetUserPassword, googleAuthUser } from "../services/user.service.js";
+import { createNewUser, loginUser, fetchUserProfile, generatePasswordResetToken, resetUserPassword, googleAuthUser, updateUserProfile, toggleUserBookmark, fetchUserBookmarks } from "../services/user.service.js";
 import { fetchBlogsByAuthor } from "../services/blog.service.js";
 import { sendPasswordResetEmail } from "../services/email.service.js";
 
@@ -235,6 +235,133 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
             });
             return;
         }
+        next(error);
+    }
+};
+
+// PUT /api/users/profile
+export const putProfile = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            res.status(401).json({
+                error: "Unauthorized access.",
+                statusCode: 401,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        const { name, bio, avatar, website, github, twitter, oldPassword, newPassword } = req.body || {};
+
+        const updatedUser = await updateUserProfile(userId, {
+            name,
+            bio,
+            avatar,
+            website,
+            github,
+            twitter,
+            oldPassword,
+            newPassword
+        });
+
+        if (!updatedUser) {
+            res.status(404).json({
+                error: "User not found.",
+                statusCode: 404,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        res.status(200).json({
+            message: "Profile updated successfully!",
+            user: updatedUser
+        });
+    } catch (error: any) {
+        if (
+            error.message.includes("password") ||
+            error.message.includes("Password")
+        ) {
+            res.status(400).json({
+                error: error.message,
+                statusCode: 400,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+        next(error);
+    }
+};
+
+// POST /api/blogs/:id/bookmark
+export const bookmarkBlog = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const userId = req.userId;
+        const blogId = req.params.id as string;
+
+        if (!userId) {
+            res.status(401).json({
+                error: "Unauthorized access.",
+                statusCode: 401,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        const result = await toggleUserBookmark(userId, blogId);
+
+        if (!result) {
+            res.status(404).json({
+                error: "Blog post not found.",
+                statusCode: 404,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        res.status(200).json({
+            message: result.isBookmarked ? "Post saved to bookmarks." : "Post removed from bookmarks.",
+            isBookmarked: result.isBookmarked,
+            totalBookmarks: result.totalBookmarks
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// GET /api/users/bookmarks
+export const getUserBookmarks = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            res.status(401).json({
+                error: "Unauthorized access.",
+                statusCode: 401,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.max(1, Math.min(50, parseInt(req.query.limit as string) || 10));
+
+        const result = await fetchUserBookmarks(userId, page, limit);
+
+        if (!result) {
+            res.status(404).json({
+                error: "User not found.",
+                statusCode: 404,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        res.status(200).json({
+            data: result.blogs,
+            pagination: result.pagination
+        });
+    } catch (error) {
         next(error);
     }
 };

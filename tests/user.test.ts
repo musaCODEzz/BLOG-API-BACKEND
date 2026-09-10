@@ -261,4 +261,168 @@ describe("Auth flow", () => {
         });
     });
 
+    describe("Profile management & Bookmarks", () => {
+        it("rejects updating profile without authentication", async () => {
+            const response = await request(app)
+                .put("/api/users/profile")
+                .send({ bio: "Hacker" });
+            expect(response.status).toBe(401);
+        });
+
+        it("updates profile details (name, bio, avatar, socials) successfully", async () => {
+            // 1. Register & login
+            const email = "profiletest@example.com";
+            await request(app).post("/api/users/register").send({
+                name: "Initial Name",
+                email,
+                password: "password123"
+            });
+            const loginRes = await request(app).post("/api/users/login").send({
+                email,
+                password: "password123"
+            });
+            const token = loginRes.body.token;
+
+            // 2. Update profile
+            const updateRes = await request(app)
+                .put("/api/users/profile")
+                .set("Authorization", `Bearer ${token}`)
+                .send({
+                    name: "Updated Name",
+                    bio: "Full Stack Engineer & OSS enthusiast",
+                    avatar: "https://example.com/my-photo.png",
+                    website: "https://mysite.dev",
+                    github: "myghhandle",
+                    twitter: "mytwhandle"
+                });
+
+            expect(updateRes.status).toBe(200);
+            expect(updateRes.body.user).toHaveProperty("name", "Updated Name");
+            expect(updateRes.body.user).toHaveProperty("bio", "Full Stack Engineer & OSS enthusiast");
+            expect(updateRes.body.user).toHaveProperty("avatar", "https://example.com/my-photo.png");
+            expect(updateRes.body.user).toHaveProperty("website", "https://mysite.dev");
+            expect(updateRes.body.user).toHaveProperty("github", "myghhandle");
+            expect(updateRes.body.user).toHaveProperty("twitter", "mytwhandle");
+            expect(updateRes.body.user).not.toHaveProperty("password");
+
+            // 3. Verify changes persist on GET /api/users/profile
+            const getRes = await request(app)
+                .get("/api/users/profile")
+                .set("Authorization", `Bearer ${token}`);
+            expect(getRes.status).toBe(200);
+            expect(getRes.body.user.bio).toBe("Full Stack Engineer & OSS enthusiast");
+        });
+
+        it("changes password via profile update with valid current password and rejects invalid current password", async () => {
+            const email = "pwdchange@example.com";
+            await request(app).post("/api/users/register").send({
+                name: "Password Changer",
+                email,
+                password: "originalPassword123"
+            });
+            const loginRes = await request(app).post("/api/users/login").send({
+                email,
+                password: "originalPassword123"
+            });
+            const token = loginRes.body.token;
+
+            // Attempt change with wrong old password
+            const failRes = await request(app)
+                .put("/api/users/profile")
+                .set("Authorization", `Bearer ${token}`)
+                .send({
+                    oldPassword: "wrongOldPassword",
+                    newPassword: "brandNewSecurePassword123"
+                });
+            expect(failRes.status).toBe(400);
+
+            // Change with correct old password
+            const successRes = await request(app)
+                .put("/api/users/profile")
+                .set("Authorization", `Bearer ${token}`)
+                .send({
+                    oldPassword: "originalPassword123",
+                    newPassword: "brandNewSecurePassword123"
+                });
+            expect(successRes.status).toBe(200);
+
+            // Verify old password fails
+            const failedLogin = await request(app).post("/api/users/login").send({
+                email,
+                password: "originalPassword123"
+            });
+            expect(failedLogin.status).toBe(401);
+
+            // Verify new password succeeds
+            const successfulLogin = await request(app).post("/api/users/login").send({
+                email,
+                password: "brandNewSecurePassword123"
+            });
+            expect(successfulLogin.status).toBe(200);
+        });
+
+        it("handles bookmarking posts and retrieving paginated bookmarks", async () => {
+            // 1. Author registers and creates a blog
+            await request(app).post("/api/users/register").send({
+                name: "Post Author",
+                email: "author.bm@example.com",
+                password: "password123"
+            });
+            const authorLogin = await request(app).post("/api/users/login").send({
+                email: "author.bm@example.com",
+                password: "password123"
+            });
+            const blogRes = await request(app)
+                .post("/api/blogs")
+                .set("Authorization", `Bearer ${authorLogin.body.token}`)
+                .send({ title: "Bookmarkable Post", content: "Awesome article to bookmark" });
+            const blogId = blogRes.body._id;
+
+            // 2. Reader registers and logs in
+            await request(app).post("/api/users/register").send({
+                name: "Bookmark Reader",
+                email: "reader.bm@example.com",
+                password: "password123"
+            });
+            const readerLogin = await request(app).post("/api/users/login").send({
+                email: "reader.bm@example.com",
+                password: "password123"
+            });
+            const readerToken = readerLogin.body.token;
+
+            // 3. Reader bookmarks the post
+            const bmRes1 = await request(app)
+                .post(`/api/blogs/${blogId}/bookmark`)
+                .set("Authorization", `Bearer ${readerToken}`);
+            expect(bmRes1.status).toBe(200);
+            expect(bmRes1.body.isBookmarked).toBe(true);
+            expect(bmRes1.body.totalBookmarks).toBe(1);
+
+            // 4. Fetch user bookmarks
+            const listRes = await request(app)
+                .get("/api/users/bookmarks")
+                .set("Authorization", `Bearer ${readerToken}`);
+            expect(listRes.status).toBe(200);
+            expect(listRes.body.data.length).toBe(1);
+            expect(listRes.body.data[0]._id).toBe(blogId);
+            expect(listRes.body.pagination.total).toBe(1);
+
+            // 5. Toggle bookmark off (remove)
+            const bmRes2 = await request(app)
+                .post(`/api/blogs/${blogId}/bookmark`)
+                .set("Authorization", `Bearer ${readerToken}`);
+            expect(bmRes2.status).toBe(200);
+            expect(bmRes2.body.isBookmarked).toBe(false);
+            expect(bmRes2.body.totalBookmarks).toBe(0);
+
+            // 6. Fetch bookmarks again (should be empty)
+            const listEmptyRes = await request(app)
+                .get("/api/users/bookmarks")
+                .set("Authorization", `Bearer ${readerToken}`);
+            expect(listEmptyRes.status).toBe(200);
+            expect(listEmptyRes.body.data.length).toBe(0);
+            expect(listEmptyRes.body.pagination.total).toBe(0);
+        });
+    });
+
 });

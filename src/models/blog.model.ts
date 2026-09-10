@@ -9,6 +9,8 @@ export interface IBlogPost extends Document {
     likes: Types.ObjectId[];
     likesCount: number;
     tags: string[];
+    views: number;
+    readTime: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -35,6 +37,15 @@ const blogSchema = new Schema<IBlogPost>(
             type: [String],
             default: [],
             index: true
+        },
+        views: {
+            type: Number,
+            default: 0,
+            index: true
+        },
+        readTime: {
+            type: String,
+            default: "1 min read"
         },
         likes: [
             {
