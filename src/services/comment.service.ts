@@ -59,3 +59,35 @@ export const deleteCommentById = async (commentId: string, userId: string) => {
     await Comment.findByIdAndDelete(commentId);
     return { status: "DELETED" as const };
 };
+
+// 4. Update a comment (Author-only enforcement)
+export const updateCommentById = async (commentId: string, userId: string, content: string, blogId?: string) => {
+    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+        return { status: "NOT_FOUND" as const };
+    }
+
+    if (blogId && !mongoose.Types.ObjectId.isValid(blogId)) {
+        return { status: "NOT_FOUND" as const };
+    }
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+        return { status: "NOT_FOUND" as const };
+    }
+
+    if (blogId && comment.blog.toString() !== blogId) {
+        return { status: "NOT_FOUND" as const };
+    }
+
+    // Check ownership
+    if (comment.author.toString() !== userId) {
+        return { status: "FORBIDDEN" as const };
+    }
+
+    comment.content = content.trim();
+    await comment.save();
+
+    const populatedComment = await comment.populate("author", "name email");
+    return { status: "UPDATED" as const, comment: populatedComment };
+};
+

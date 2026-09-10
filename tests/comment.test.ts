@@ -56,4 +56,61 @@ describe("Comment System", () => {
             .set("Authorization", `Bearer ${authorToken}`);
         expect(deleteRes.status).toBe(200);
     });
+
+    it("updates a comment when authenticated as author and forbids non-author", async () => {
+        const authorToken = await registerAndLogin("updateauthor@example.com");
+        const otherUserToken = await registerAndLogin("otheruser@example.com");
+
+        // 1. Create a blog post
+        const blogRes = await request(app)
+            .post("/api/blogs")
+            .set("Authorization", `Bearer ${authorToken}`)
+            .send({ title: "Update Comment Test Post", content: "Some content" });
+        const blogId = blogRes.body._id;
+
+        // 2. Create a comment
+        const commentRes = await request(app)
+            .post(`/api/blogs/${blogId}/comments`)
+            .set("Authorization", `Bearer ${authorToken}`)
+            .send({ content: "Initial comment content" });
+        const commentId = commentRes.body._id;
+
+        // 3. Unauthenticated update fails
+        const unauthRes = await request(app)
+            .put(`/api/blogs/${blogId}/comments/${commentId}`)
+            .send({ content: "Hacked comment" });
+        expect(unauthRes.status).toBe(401);
+
+        // 4. Intruder update forbidden (403)
+        const intruderRes = await request(app)
+            .put(`/api/blogs/${blogId}/comments/${commentId}`)
+            .set("Authorization", `Bearer ${otherUserToken}`)
+            .send({ content: "Malicious update" });
+        expect(intruderRes.status).toBe(403);
+
+        // 5. Empty content rejected (400)
+        const emptyRes = await request(app)
+            .put(`/api/blogs/${blogId}/comments/${commentId}`)
+            .set("Authorization", `Bearer ${authorToken}`)
+            .send({ content: "" });
+        expect(emptyRes.status).toBe(400);
+
+        // 6. Author updates comment successfully (200)
+        const updateRes = await request(app)
+            .put(`/api/blogs/${blogId}/comments/${commentId}`)
+            .set("Authorization", `Bearer ${authorToken}`)
+            .send({ content: "Updated comment text by author" });
+        expect(updateRes.status).toBe(200);
+        expect(updateRes.body.content).toBe("Updated comment text by author");
+        expect(updateRes.body).toHaveProperty("author");
+        expect(updateRes.body.author).toHaveProperty("email", "updateauthor@example.com");
+
+        // 7. Non-existent comment returns 404
+        const nonExistentRes = await request(app)
+            .put(`/api/blogs/${blogId}/comments/64f1a2b3c4d5e6f7a8b9c0d1`)
+            .set("Authorization", `Bearer ${authorToken}`)
+            .send({ content: "Valid content" });
+        expect(nonExistentRes.status).toBe(404);
+    });
 });
+

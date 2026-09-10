@@ -1,7 +1,7 @@
 // src/controllers/comment.controller.ts
 import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middlewares/auth.js";
-import { fetchCommentsByBlogId, createComment, deleteCommentById } from "../services/comment.service.js";
+import { fetchCommentsByBlogId, createComment, deleteCommentById, updateCommentById } from "../services/comment.service.js";
 
 // GET /api/blogs/:blogId/comments
 export const getComments = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -75,6 +75,39 @@ export const deleteComment = async (req: AuthRequest, res: Response, next: NextF
         }
 
         res.status(200).json({ message: "Comment deleted successfully." });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// PUT /api/blogs/:blogId/comments/:commentId
+export const putComment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { blogId, commentId } = req.params;
+        const { content } = req.body;
+        const userId = req.userId as string;
+
+        const result = await updateCommentById(commentId as string, userId, content, blogId as string);
+
+        if (result.status === "NOT_FOUND") {
+            res.status(404).json({
+                error: "Comment not found.",
+                statusCode: 404,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        if (result.status === "FORBIDDEN") {
+            res.status(403).json({
+                error: "Not authorized to update this comment.",
+                statusCode: 403,
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
+        res.status(200).json(result.comment);
     } catch (error) {
         next(error);
     }

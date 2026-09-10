@@ -1,6 +1,6 @@
 // src/routes/comment.routes.ts
 import express, { type Router } from "express";
-import { getComments, postComment, deleteComment } from "../controllers/comment.controller.js";
+import { getComments, postComment, deleteComment, putComment } from "../controllers/comment.controller.js";
 import { requireAuth } from "../middlewares/auth.js";
 import { validateComment } from "../middlewares/validateComment.js";
 
@@ -106,4 +106,54 @@ commentRouter.post("/", requireAuth, validateComment, postComment);
  *         description: Comment not found.
  */
 commentRouter.delete("/:commentId", requireAuth, deleteComment);
+
+/**
+ * @swagger
+ * /api/blogs/{blogId}/comments/{commentId}:
+ *   put:
+ *     tags:
+ *       - Comments
+ *     summary: Update a comment
+ *     description: Modifies the content of an existing comment. Requires authentication — only the original author of the comment may update it.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: blogId
+ *         required: true
+ *         description: ID of the blog post
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         description: ID of the comment to update
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 example: "Updated comment text: thanks for the feedback!"
+ *     responses:
+ *       200:
+ *         description: Comment updated successfully.
+ *       400:
+ *         description: Validation error or invalid ID format.
+ *       401:
+ *         description: Unauthorized - missing or invalid token.
+ *       403:
+ *         description: Forbidden - not authorized to update this comment.
+ *       404:
+ *         description: Comment or blog post not found.
+ */
+commentRouter.put("/:commentId", requireAuth, validateComment, putComment);
+
 
