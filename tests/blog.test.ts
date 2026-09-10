@@ -117,4 +117,63 @@ describe("Blog CRUD", () => {
             .set("Authorization", `Bearer ${readerToken}`);
         expect(notFoundRes.status).toBe(404);
     });
+
+    it("supports creating blogs with tags, filtering by tag, and fetching popular tags", async () => {
+        const token = await registerAndLogin("tagauthor@example.com");
+
+        // 1. Create posts with tags
+        await request(app)
+            .post("/api/blogs")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Post with TS and Docker",
+                content: "Content about TS and Docker",
+                tags: ["TypeScript", " Docker ", "typescript"] // tests normalization & duplicate removal
+            });
+
+        await request(app)
+            .post("/api/blogs")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Post with React and TS",
+                content: "Content about React and TS",
+                tags: "react, typescript" // tests comma-separated string format
+            });
+
+        await request(app)
+            .post("/api/blogs")
+            .set("Authorization", `Bearer ${token}`)
+            .send({
+                title: "Post with Python only",
+                content: "Content about Python",
+                tags: ["python"]
+            });
+
+        // 2. Filter blogs by tag: typescript (should return 2 posts)
+        const tsFilterRes = await request(app).get("/api/blogs?tag=typescript");
+        expect(tsFilterRes.status).toBe(200);
+        expect(tsFilterRes.body.data.length).toBe(2);
+        expect(tsFilterRes.body.data[0].tags).toContain("typescript");
+
+        // 3. Filter blogs by tag: docker (should return 1 post)
+        const dockerFilterRes = await request(app).get("/api/blogs?tag=docker");
+        expect(dockerFilterRes.status).toBe(200);
+        expect(dockerFilterRes.body.data.length).toBe(1);
+        expect(dockerFilterRes.body.data[0].tags).toContain("docker");
+
+        // 4. Filter by non-existent tag (should return 0 posts)
+        const emptyFilterRes = await request(app).get("/api/blogs?tag=nonexistenttag");
+        expect(emptyFilterRes.status).toBe(200);
+        expect(emptyFilterRes.body.data.length).toBe(0);
+
+        // 5. Fetch popular tags
+        const tagsRes = await request(app).get("/api/blogs/tags");
+        expect(tagsRes.status).toBe(200);
+        expect(tagsRes.body).toHaveProperty("tags");
+        expect(Array.isArray(tagsRes.body.tags)).toBe(true);
+        // typescript should have count 2
+        const tsTag = tagsRes.body.tags.find((t: { tag: string; count: number }) => t.tag === "typescript");
+        expect(tsTag).toBeDefined();
+        expect(tsTag.count).toBe(2);
+    });
 });

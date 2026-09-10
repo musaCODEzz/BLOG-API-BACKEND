@@ -1,5 +1,5 @@
 import express, { type Router } from "express";
-import { getBlogs, getBlogById, postBlog, putBlog, deleteBlog, likeBlog } from "../controllers/blog.controller.js";
+import { getBlogs, getBlogById, postBlog, putBlog, deleteBlog, likeBlog, getPopularTags } from "../controllers/blog.controller.js";
 import { validateBlogPost } from "../middlewares/validateBlog.js";
 import { requireAuth } from "../middlewares/auth.js";
 import { commentRouter } from "./comment.routes.js";
@@ -39,15 +39,52 @@ export const blogRouter: Router = express.Router();
  *       - in: query
  *         name: sort
  *         required: false
- *         description: Field to sort by (prefix with '-' for descending, e.g. '-createdAt', 'createdAt', '-title')
+ *         description: Field to sort by (prefix with '-' for descending, e.g. '-createdAt', 'createdAt', '-title', '-likesCount')
  *         schema:
  *           type: string
  *           default: "-createdAt"
+ *       - in: query
+ *         name: tag
+ *         required: false
+ *         description: Filter blogs by tag (e.g. 'typescript', 'docker', 'react')
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: A paginated list of blogs.
  */
 blogRouter.get("/", getBlogs);
+
+/**
+ * @swagger
+ * /api/blogs/tags:
+ *   get:
+ *     tags:
+ *       - Blogs
+ *     summary: Retrieve popular tags
+ *     description: Aggregates all tags across articles and returns them sorted by usage frequency with article counts.
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: Popular tags retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 tags:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       tag:
+ *                         type: string
+ *                         example: "typescript"
+ *                       count:
+ *                         type: integer
+ *                         example: 5
+ */
+blogRouter.get("/tags", getPopularTags);
 
 /**
  * @swagger
@@ -99,6 +136,11 @@ blogRouter.get("/:id", getBlogById);
  *               content:
  *                 type: string
  *                 example: "Testing the UI"
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["typescript", "docker"]
  *     responses:
  *       201:
  *         description: Blog created successfully.
@@ -142,6 +184,11 @@ blogRouter.post("/", requireAuth, validateBlogPost, postBlog);
  *               content:
  *                 type: string
  *                 example: "This content was updated via Swagger!"
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["typescript", "react"]
  *     responses:
  *       200:
  *         description: Blog updated successfully.

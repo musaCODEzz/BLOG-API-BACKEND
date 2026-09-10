@@ -1,6 +1,6 @@
 import type { Response, NextFunction } from "express";
 import type { AuthRequest } from "../middlewares/auth.js";
-import { fetchAllBlogs, fetchBlogById, createNewBlog, updateBlogById, deleteBlogById, toggleBlogLike } from "../services/blog.service.js";
+import { fetchAllBlogs, fetchBlogById, createNewBlog, updateBlogById, deleteBlogById, toggleBlogLike, fetchPopularTags } from "../services/blog.service.js";
 
 // GET /api/blogs?page=1&limit=10&search=typescript&sort=-createdAt
 export const getBlogs = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -10,8 +10,9 @@ export const getBlogs = async (req: AuthRequest, res: Response, next: NextFuncti
         const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string) || 10));
         const search = req.query.search as string | undefined;
         const sort = req.query.sort as string | undefined;
+        const tag = req.query.tag as string | undefined;
 
-        const { blogs, pagination } = await fetchAllBlogs({ page, limit, search, sort });
+        const { blogs, pagination } = await fetchAllBlogs({ page, limit, search, sort, tag });
 
         res.status(200).json({
             data: blogs,
@@ -46,10 +47,10 @@ export const getBlogById = async (req: AuthRequest, res: Response, next: NextFun
 // POST /api/blogs
 export const postBlog = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const { title, content } = req.body;
+        const { title, content, tags } = req.body;
         const authorId = req.userId as string;
 
-        const newBlog = await createNewBlog(title, content, authorId);
+        const newBlog = await createNewBlog(title, content, authorId, tags);
         res.status(201).json(newBlog);
     } catch (error) {
         next(error);
@@ -60,10 +61,10 @@ export const postBlog = async (req: AuthRequest, res: Response, next: NextFuncti
 export const putBlog = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
         const blogId = req.params.id as string;
-        const { title, content } = req.body;
+        const { title, content, tags } = req.body;
         const userId = req.userId as string;
 
-        const updatedBlog = await updateBlogById(blogId, title, content, userId);
+        const updatedBlog = await updateBlogById(blogId, title, content, userId, tags);
         if (!updatedBlog) {
             res.status(404).json({
                 error: "Cannot update. Blog post not found.",
@@ -138,6 +139,16 @@ export const likeBlog = async (req: AuthRequest, res: Response, next: NextFuncti
             isLiked: result.isLiked,
             likesCount: result.likesCount
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// GET /api/blogs/tags
+export const getPopularTags = async (_req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const tags = await fetchPopularTags();
+        res.status(200).json({ tags });
     } catch (error) {
         next(error);
     }

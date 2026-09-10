@@ -24,5 +24,30 @@ export const validateBlogPost = (req: Request, res: Response, next: NextFunction
     req.body.title = title.trim();
     req.body.content = content.trim();
 
+    // Sanitize and normalize tags if provided (accepts string[] or comma-separated string)
+    if (req.body.tags !== undefined) {
+        if (Array.isArray(req.body.tags)) {
+            req.body.tags = Array.from(
+                new Set(
+                    req.body.tags
+                        .filter((t: unknown) => typeof t === "string")
+                        .map((t: string) => t.trim().toLowerCase())
+                        .filter((t: string) => t.length > 0)
+                )
+            );
+        } else if (typeof req.body.tags === "string") {
+            req.body.tags = Array.from(
+                new Set(
+                    req.body.tags
+                        .split(",")
+                        .map((t: string) => t.trim().toLowerCase())
+                        .filter((t: string) => t.length > 0)
+                )
+            );
+        } else {
+            req.body.tags = [];
+        }
+    }
+
     next();
 };

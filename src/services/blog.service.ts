@@ -6,13 +6,17 @@ export interface FetchBlogsOptions {
     limit: number;
     search?: string | undefined;
     sort?: string | undefined;
+    tag?: string | undefined;
 }
 
-// 1. GET ALL — Populates author details, supports pagination, search, and dynamic sorting
-export const fetchAllBlogs = async ({ page, limit, search, sort = "-createdAt" }: FetchBlogsOptions) => {
+// 1. GET ALL — Populates author details, supports pagination, search, tag filtering, and dynamic sorting
+export const fetchAllBlogs = async ({ page, limit, search, sort = "-createdAt", tag }: FetchBlogsOptions) => {
     const filter: Record<string, unknown> = {};
     if (search && search.trim() !== "") {
         filter.$text = { $search: search.trim() };
+    }
+    if (tag && tag.trim() !== "") {
+        filter.tags = tag.toLowerCase().trim();
     }
     const skip = (page - 1) * limit;
 
@@ -61,12 +65,12 @@ export const fetchBlogById = async (id: string) => {
 };
 
 // 3. CREATE
-export const createNewBlog = async (title: string, content: string, authorId: string) => {
-    return await Blog.create({ title, content, author: authorId });
+export const createNewBlog = async (title: string, content: string, authorId: string, tags: string[] = []) => {
+    return await Blog.create({ title, content, author: authorId, tags });
 };
 
 // 4. UPDATE — only the original author may update their own post
-export const updateBlogById = async (id: string, title: string, content: string, userId: string) => {
+export const updateBlogById = async (id: string, title: string, content: string, userId: string, tags?: string[]) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return null;
     }
@@ -85,8 +89,13 @@ export const updateBlogById = async (id: string, title: string, content: string,
         throw new Error("Not authorized to modify this post.");
     }
 
+    const updateData: { title: string; content: string; tags?: string[] } = { title, content };
+    if (tags !== undefined) {
+        updateData.tags = tags;
+    }
+
     // returnDocument: 'after' tells Mongoose to return the newly updated data
-    return await Blog.findByIdAndUpdate(id, { title, content }, { returnDocument: "after" });
+    return await Blog.findByIdAndUpdate(id, updateData, { returnDocument: "after" });
 };
 
 
@@ -159,4 +168,16 @@ export const toggleBlogLike = async (blogId: string, userId: string) => {
         isLiked: !hasLiked,
         likesCount: blog.likesCount
     };
+};
+
+// 8. POPULAR TAGS — Aggregates and returns popular tags across articles
+export const fetchPopularTags = async (limit: number = 20) => {
+    const popularTags = await Blog.aggregate([
+        { $unwind: "$tags" },
+        { $group: { _id: "$tags", count: { $sum: 1 } } },
+        { $sort: { count: -1, _id: 1 } },
+        { $limit: limit },
+        { $project: { _id: 0, tag: "$_id", count: 1 } }
+    ]);
+    return popularTags;
 };
